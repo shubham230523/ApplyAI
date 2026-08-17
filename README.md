@@ -1,56 +1,101 @@
-# Welcome to your Expo app 👋
+# ApplyAI 🚀
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+### The AI-First Job Search & Auto-Apply Platform
 
-## Get started
+ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it empowers candidates to find, rank, and apply for jobs using natural language.
 
-1. Install dependencies
+---
 
+## 🌟 Vision
+
+**"Find me an Android developer role in Mumbai with 3+ years experience and salary above 12 LPA."**
+
+Traditional job boards force you to fiddle with filters and scroll through endless duplicates. ApplyAI lets you speak your mind. Our AI Orchestration layer understands your requirements, searches multiple sources, ranks matches semantically against your resume, and prepares tailored applications—all within a single chat interface.
+
+---
+
+## 🛠️ Core Technology Stack
+
+### **Apps**
+- **Client**: Expo React Native (iOS, Android, Web)
+- **Styling**: NativeWind (Tailwind CSS for Mobile & Web)
+- **State Management**: Zustand & TanStack Query
+- **Routing**: Expo Router (File-based)
+
+### **Backend**
+- **Server**: Fastify (Node.js + TypeScript)
+- **Database**: PostgreSQL with **Drizzle ORM**
+- **Auth**: Supabase Auth (JWT & Session Persistence)
+- **Documentation**: OpenAPI / Swagger
+
+### **Packages**
+- **@applyai/shared-types**: Shared domain models and TypeScript interfaces.
+- **@applyai/ui**: (Planned) Reusable cross-platform component library.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v20+)
+- PostgreSQL instance
+- Supabase account for Authentication
+
+### Installation
+
+1. **Clone and Install Dependencies**
    ```bash
+   git clone https://github.com/your-repo/applyai.git
+   cd applyai
    npm install
    ```
 
-2. Start the app
+2. **Environment Configuration**
+   Copy `.env.example` to `.env` in `apps/backend` and `apps/client` (or use `.env.local`).
 
+3. **Database Migrations**
    ```bash
-   npx expo start
+   cd apps/backend
+   npx drizzle-kit generate
+   npx drizzle-kit push
    ```
 
-In the output, you'll find options to open the app in a
+4. **Launch the Platform**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   **Start Backend:**
+   ```bash
+   npm run dev --workspace=backend
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   **Start Mobile/Web Client:**
+   ```bash
+   npm run web --workspace=@applyai/client
+   ```
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🛣️ Roadmap
 
-```bash
-npm run reset-project
-```
+- [x] **Phase 1**: Monorepo Architecture & TypeScript Setup
+- [x] **Phase 2**: Cross-Platform Expo & NativeWind Integration
+- [x] **Phase 3**: Supabase Auth & JWT Middleware
+- [x] **Phase 4**: PostgreSQL Schema & Drizzle ORM Setup
+- [ ] **Phase 5**: AI Orchestrator & Job Search extraction
+- [ ] **Phase 6**: Resume Parsing & Semantic Matching
+- [ ] **Phase 7**: Auto-Apply Beta
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## 🤝 Contributing
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+We are building the future of recruitment. If you're interested in AI agents, React Native, or high-performance backends, feel free to open a PR or join our community.
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## 📄 License
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+*Built with ❤️ for the developer community.*
