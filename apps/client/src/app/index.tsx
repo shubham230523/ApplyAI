@@ -1,8 +1,9 @@
 import React from 'react';
 import * as Device from 'expo-device';
-import { Platform, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/auth';
+import { useRouter } from 'expo-router';
 
 import { AnimatedIcon } from '@/components/animated-icon';
 import { HintRow } from '@/components/hint-row';
@@ -32,6 +33,7 @@ function getDevMenuHint() {
 
 export default function HomeScreen() {
   const { signOut, user } = useAuth();
+  const router = useRouter();
 
   return (
     <ThemedView style={styles.container}>
@@ -44,12 +46,21 @@ export default function HomeScreen() {
           <ThemedText>Logged in as: {user?.email}</ThemedText>
         </ThemedView>
 
-        <TouchableOpacity
-          onPress={signOut}
-          className="bg-red-500 p-4 rounded-xl w-full"
-        >
-          <Text className="text-white text-center font-bold">Sign Out</Text>
-        </TouchableOpacity>
+        <View className="w-full space-y-4">
+          <TouchableOpacity
+            onPress={() => router.push('/profile')}
+            className="bg-blue-600 p-4 rounded-xl w-full"
+          >
+            <Text className="text-white text-center font-bold">Manage Profile</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={signOut}
+            className="bg-red-500 p-4 rounded-xl w-full mt-4"
+          >
+            <Text className="text-white text-center font-bold">Sign Out</Text>
+          </TouchableOpacity>
+        </View>
 
         <ThemedText type="code" style={styles.code}>
           get started

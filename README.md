@@ -2,7 +2,7 @@
 
 ### The AI-First Job Search & Auto-Apply Platform
 
-ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it empowers candidates to find, rank, and apply for jobs using natural language.
+    ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it empowers candidates to find, rank, and apply for jobs using natural language.
 
 ---
 

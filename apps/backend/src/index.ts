@@ -4,6 +4,7 @@ import jwt from '@fastify/jwt';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { serializerCompiler, validatorCompiler, jsonSchemaTransform } from 'fastify-type-provider-zod';
+import { profileRoutes } from './modules/profiles/profile.routes.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -45,6 +46,9 @@ fastify.register(swaggerUi, {
 fastify.get('/health', async () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
+
+// API Routes
+fastify.register(profileRoutes, { prefix: '/api/profile' });
 
 // Start Server
 const start = async () => {
