@@ -4,7 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
+    "dev": "nodemon --watch src --ext ts --exec node --loader ts-node/esm src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,24 +15,35 @@
   "description": "",
   "devDependencies": {
     "@types/dotenv": "^8.2.3",
-    "@types/node": "^26.2.0",
+    "@types/node": "^20.17.17",
+    "@types/node-fetch": "^2.6.13",
+    "@types/pdf-parse": "^1.1.5",
     "drizzle-kit": "^0.31.10",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
-    "typescript": "^7.0.2"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "@applyai/shared-types": "^1.0.0",
     "@fastify/cors": "^11.3.0",
     "@fastify/jwt": "^10.2.2",
+    "@fastify/multipart": "^10.1.1",
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.1",
     "@supabase/supabase-js": "^2.112.3",
+    "@types/multer": "^2.2.0",
+    "@types/uuid": "^11.0.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "fastify": "^5.12.0",
     "fastify-type-provider-zod": "^7.0.0",
+    "multer": "^2.2.0",
+    "node-fetch": "^3.3.2",
+    "openai": "^7.5.0",
+    "pdfjs-dist": "^2.16.105",
     "postgres": "^3.4.9",
-    "zod": "^4.4.3"
+    "uuid": "^14.0.2",
+    "zod": "^4.4.3",
+    "zod-to-json-schema": "^3.25.2"
   }
 }

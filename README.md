@@ -80,9 +80,9 @@ Traditional job boards force you to fiddle with filters and scroll through endle
 - [x] **Phase 2**: Cross-Platform Expo & NativeWind Integration
 - [x] **Phase 3**: Supabase Auth & JWT Middleware
 - [x] **Phase 4**: PostgreSQL Schema & Drizzle ORM Setup
-- [ ] **Phase 5**: AI Orchestrator & Job Search extraction
-- [ ] **Phase 6**: Resume Parsing & Semantic Matching
-- [ ] **Phase 7**: Auto-Apply Beta
+- [x] **Phase 5**: AI Orchestrator & Job Search extraction
+- [x] **Phase 6**: Resume Parsing & Semantic Matching
+- [x] **Phase 7**: Auto-Apply Beta
 
 ---
 

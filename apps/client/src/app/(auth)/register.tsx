@@ -3,15 +3,15 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { supabase } from '../../lib/supabase';
 import { useRouter, Link } from 'expo-router';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function signInWithEmail() {
+  async function signUpWithEmail() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -19,7 +19,8 @@ export default function LoginScreen() {
     if (error) {
       alert(error.message);
     } else {
-      router.replace('/');
+      alert('Registration successful! Please check your email or log in.');
+      router.replace('/login');
     }
     setLoading(false);
   }
@@ -27,7 +28,8 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>ApplyAI</Text>
+        <Text style={styles.title}>Join ApplyAI</Text>
+        <Text style={styles.subtitle}>Find your dream job with AI</Text>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
@@ -44,7 +46,7 @@ export default function LoginScreen() {
           <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder="At least 6 characters"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -55,15 +57,18 @@ export default function LoginScreen() {
         <TouchableOpacity
           style={styles.button}
           disabled={loading}
-          onPress={signInWithEmail}
+          onPress={signUpWithEmail}
         >
-          <Text style={styles.buttonText}>
-            {loading ? 'Loading...' : 'Sign In'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.buttonText}>Create Account</Text>
+          )}
         </TouchableOpacity>
-        <Link href="/register" asChild>
+
+        <Link href="/login" asChild>
           <TouchableOpacity style={styles.linkButton}>
-            <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+            <Text style={styles.linkText}>Already have an account? Sign In</Text>
           </TouchableOpacity>
         </Link>
       </View>
@@ -92,11 +97,17 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 32,
     color: '#111827',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 32,
+    marginTop: 8,
   },
   inputGroup: {
     marginBottom: 20,

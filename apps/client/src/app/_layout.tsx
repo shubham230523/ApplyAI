@@ -1,11 +1,15 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from '../contexts/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import '../src/global.css';
+import '../global.css';
+
+// Fix for NativeWind v4 color scheme issue on Web
+if (typeof StyleSheet.setFlag === 'function') {
+  StyleSheet.setFlag('darkMode', 'class');
+}
 
 const queryClient = new QueryClient();
 
@@ -16,7 +20,6 @@ function RootLayoutNav() {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const colorScheme = useColorScheme();
 
   useEffect(() => {
     if (loading) return;
@@ -36,13 +39,13 @@ function RootLayoutNav() {
     }
   }, [loading]);
 
+  if (loading) return null;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ title: 'Home' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)/login" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
   );
 }
 

@@ -1,0 +1,44 @@
+import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { AIService } from '../ai/ai.service.js';
+import { JobsService } from '../jobs/jobs.service.js';
+import { OrchestratorResponse } from '@applyai/shared-types';
+
+const aiService = new AIService();
+const jobsService = new JobsService();
+
+export async function orchestratorRoutes(fastify: FastifyInstance) {
+  fastify.post('/query', {
+    schema: {
+      body: z.object({
+        query: z.string(),
+      }),
+      response: {
+        200: z.object({
+          query: z.string(),
+          params: z.any(),
+          jobs: z.array(z.any()),
+          message: z.string(),
+        }),
+      },
+    },
+  }, async (request, reply): Promise<OrchestratorResponse> => {
+    const { query } = request.body as { query: string };
+
+    // 1. Extract parameters using AI
+    const params = await aiService.extractJobSearchParams(query);
+
+    // 2. Search jobs
+    const jobs = await jobsService.searchJobs(params);
+
+    // 3. Generate a friendly message
+    const message = await aiService.generateResponse(query, jobs.length);
+
+    return {
+      query,
+      params,
+      jobs,
+      message,
+    };
+  });
+}

@@ -11,5 +11,9 @@
     "client:ios": "npm run ios --workspace=apps/client",
     "client:web": "npm run web --workspace=apps/client",
     "client:lint": "npm run lint --workspace=apps/client"
+  },
+  "devDependencies": {
+    "nativewind": "^4.2.6",
+    "tailwindcss": "^3.4.17"
   }
 }

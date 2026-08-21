@@ -1,5 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require("nativewind/utils");
+const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
 
 // Find the project and workspace roots

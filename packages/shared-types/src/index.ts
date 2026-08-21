@@ -41,3 +41,19 @@ export interface CandidateProfile {
   preferredSalary?: number;
   noticePeriod?: string;
 }
+
+export interface JobSearchParams {
+  title?: string;
+  location?: string;
+  skills?: string[];
+  experienceMin?: number;
+  salaryMin?: number;
+  workMode?: 'remote' | 'hybrid' | 'onsite';
+}
+
+export interface OrchestratorResponse {
+  query: string;
+  params: JobSearchParams;
+  jobs: Job[];
+  message: string;
+}

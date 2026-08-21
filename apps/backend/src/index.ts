@@ -5,6 +5,9 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { serializerCompiler, validatorCompiler, jsonSchemaTransform } from 'fastify-type-provider-zod';
 import { profileRoutes } from './modules/profiles/profile.routes.js';
+import { orchestratorRoutes } from './modules/orchestrator/orchestrator.routes.js';
+import { resumeRoutes } from './modules/resumes/resume.routes.js';
+import { applicationRoutes } from './modules/applications/application.routes.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -49,6 +52,9 @@ fastify.get('/health', async () => {
 
 // API Routes
 fastify.register(profileRoutes, { prefix: '/api/profile' });
+fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
+fastify.register(resumeRoutes, { prefix: '/api/resume' });
+fastify.register(applicationRoutes, { prefix: '/api/applications' });
 
 // Start Server
 const start = async () => {

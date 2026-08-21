@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, primaryKey, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -55,6 +55,10 @@ export const jobs = pgTable('jobs', {
   applicationUrl: text('application_url').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => {
+  return {
+    sourceJobIdx: uniqueIndex('source_job_idx').on(table.source, table.sourceJobId),
+  };
 });
 
 export const applications = pgTable('applications', {
