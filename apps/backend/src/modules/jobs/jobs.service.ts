@@ -2,7 +2,7 @@ import { db } from '../../db/index.js';
 import { jobs } from '../../db/schema.js';
 import { Job, JobSearchParams } from '@applyai/shared-types';
 import { sql } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export class JobsService {
   private static aiJobsCache = new Map<string, Job>();
@@ -49,7 +49,7 @@ export class JobsService {
     const location = params.location || 'Remote';
 
     return Array.from({ length: 5 }).map((_, i) => ({
-      id: uuidv4(),
+      id: randomUUID(),
       source: 'MockBoard',
       sourceJobId: `mock-${i}-${Date.now()}`,
       title: titles[i % titles.length],

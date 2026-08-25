@@ -100,17 +100,32 @@ export default function AssistantScreen() {
     setLoading(true);
 
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
+    // Safety abort controller
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
+
     try {
+      console.log('Dispatching request to:', `${apiUrl}/api/orchestrator/query`);
       const response = await fetch(`${apiUrl}/api/orchestrator/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: textToSend,
-          history: messages.slice(-6) // Pass last 3 rounds of conversation for context
+          history: messages.slice(-6)
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+      console.log('Network response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
       const data: OrchestratorResponse = await response.json();
+      console.log('Payload decoded. Jobs found:', data.jobs?.length);
 
       if (data.jobs && data.jobs.length > 0) {
         setAllJobs(prev => [...data.jobs, ...prev]);
@@ -150,16 +165,16 @@ export default function AssistantScreen() {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
           >
             {/* Chat Header - Soft Glass */}
-            <View className="px-5 py-4 border-b border-slate-200/40 glass z-20 flex-row items-center justify-between">
+            <View className="px-4 py-3 border-b border-slate-200/40 glass z-20 flex-row items-center justify-between">
               <View>
-                <Text className="text-xl font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Agent Chat</Text>
-                <View className="flex-row items-center mt-1">
-                  <View className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2" />
-                  <Text className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.1em]">Context Aware</Text>
+                <Text className="text-lg font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Agent Chat</Text>
+                <View className="flex-row items-center mt-0.5">
+                  <View className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1.5" />
+                  <Text className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Context Aware</Text>
                 </View>
               </View>
               <TouchableOpacity className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center border border-slate-100 shadow-sm">
-                <SymbolView name="brain.head.profile" size={16} tintColor="#6366f1" />
+                <SymbolView name="brain.head.profile" size={14} tintColor="#6366f1" />
               </TouchableOpacity>
             </View>
 
@@ -173,12 +188,12 @@ export default function AssistantScreen() {
               >
                 {messages.map((msg) => (
                   <View key={msg.id} className={`mb-10 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                    <View className={`px-5 py-3.5 rounded-[24px] max-w-[95%] shadow-sm ${
+                    <View className={`px-4 py-3 rounded-[20px] max-w-[95%] shadow-sm ${
                       msg.type === 'user'
                         ? 'bg-slate-900 rounded-br-none'
                         : 'bg-white rounded-bl-none border border-slate-200/60'
                     }`}>
-                      <Text className={`text-[14px] leading-relaxed ${msg.type === 'user' ? 'text-white font-medium' : 'text-slate-700'}`}>
+                      <Text className={`text-[12.5px] leading-relaxed ${msg.type === 'user' ? 'text-white font-medium' : 'text-slate-700'}`}>
                         {msg.text}
                       </Text>
                     </View>
@@ -237,7 +252,7 @@ export default function AssistantScreen() {
                 </TouchableOpacity>
               )}
 
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-[28px] px-6 py-1 shadow-inner">
+              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-[28px] pl-5 pr-2 py-1 shadow-inner">
                 <TextInput
                   className="flex-1 min-h-[52px] text-slate-900 text-[15px] py-3"
                   placeholder="Task your agent..."
@@ -245,18 +260,20 @@ export default function AssistantScreen() {
                   value={query}
                   onChangeText={setQuery}
                   multiline
-                  style={{ fontFamily: 'Inter' }}
+                  style={{ fontFamily: 'Inter', outlineStyle: 'none' } as any}
                   autoFocus={true}
                 />
-                <TouchableOpacity
-                  onPress={() => handleSend()}
-                  disabled={loading || !query.trim()}
-                  className={`ml-4 w-10 h-10 rounded-full items-center justify-center ${
-                    query.trim() ? 'bg-indigo-600 shadow-lg shadow-indigo-200' : 'bg-slate-200'
-                  }`}
-                >
-                  <SymbolView name="arrow.up" size={18} tintColor="white" />
-                </TouchableOpacity>
+                <View className="w-10 items-center justify-center">
+                  {query.trim().length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => handleSend()}
+                      disabled={loading}
+                      className="w-8 h-8 rounded-full bg-indigo-600 items-center justify-center active:scale-90"
+                    >
+                      <Text className="text-white text-[16px] font-bold" style={{ marginTop: -2 }}>↑</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
           </KeyboardAvoidingView>

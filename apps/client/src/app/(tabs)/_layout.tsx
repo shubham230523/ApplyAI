@@ -7,15 +7,15 @@ function SidebarItem({ name, icon, label, active }: { name: string, icon: string
   return (
     <Link href={name === 'index' ? '/' : `/${name}`} asChild>
       <TouchableOpacity
-        className={`flex-row items-center px-4 py-3 rounded-2xl mb-2 ${active ? 'bg-slate-900 shadow-xl shadow-slate-200' : 'hover:bg-slate-50'}`}
+        className={`flex-row items-center px-3 py-2 rounded-xl mb-1.5 ${active ? 'bg-slate-900 shadow-lg shadow-slate-200' : 'hover:bg-slate-50'}`}
       >
         <SymbolView
           name={icon}
-          size={18}
+          size={16}
           tintColor={active ? '#ffffff' : '#64748b'}
         />
         <Text
-          className={`ml-3 text-base font-bold tracking-tight ${active ? 'text-white' : 'text-slate-600'}`}
+          className={`ml-2.5 text-sm font-bold tracking-tight ${active ? 'text-white' : 'text-slate-600'}`}
           style={{ fontFamily: 'Geist' }}
         >
           {label}
@@ -37,10 +37,10 @@ export default function TabsLayout() {
         style={Platform.OS === 'web' ? { height: '100vh' } : { flex: 1 }}
       >
         {/* Sidebar */}
-        <View className="w-60 border-r border-slate-100 p-5 bg-white h-full">
-          <View className="mb-8">
-            <Text className="text-xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
-            <Text className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Recruitment Hub</Text>
+        <View className="w-48 border-r border-slate-100 p-3 bg-white h-full">
+          <View className="mb-6 ml-2">
+            <Text className="text-base font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
+            <Text className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Recruitment Hub</Text>
           </View>
 
           <View className="flex-1">
@@ -64,10 +64,10 @@ export default function TabsLayout() {
             />
           </View>
 
-          <View className="pt-8 border-t border-slate-50">
-            <TouchableOpacity className="flex-row items-center px-4 py-3 rounded-xl bg-slate-900 shadow-xl shadow-slate-200 active:scale-95 transition-all">
-              <SymbolView name="plus.circle.fill" size={16} tintColor="white" />
-              <Text className="ml-2 text-white font-bold text-xs uppercase tracking-widest">Update AI CV</Text>
+          <View className="pt-6 border-t border-slate-50">
+            <TouchableOpacity className="flex-row items-center px-3 py-2 rounded-lg bg-slate-900 shadow-lg active:scale-95 transition-all">
+              <SymbolView name="plus.circle.fill" size={13} tintColor="white" />
+              <Text className="ml-2 text-white font-bold text-[9px] uppercase tracking-widest">Update AI CV</Text>
             </TouchableOpacity>
           </View>
         </View>

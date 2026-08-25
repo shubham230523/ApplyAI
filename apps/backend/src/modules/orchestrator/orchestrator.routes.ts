@@ -2,10 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AIService } from '../ai/ai.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
-import { OrchestratorResponse } from '@applyai/shared-types';
 
 const aiService = new AIService();
-const jobsService = new JobsService();
 
 export async function orchestratorRoutes(fastify: FastifyInstance) {
   fastify.post('/query', {
@@ -14,26 +12,27 @@ export async function orchestratorRoutes(fastify: FastifyInstance) {
         query: z.string(),
         history: z.array(z.any()).optional(),
       }),
-      response: {
-        200: z.object({
-          query: z.string(),
-          params: z.any(),
-          jobs: z.array(z.any()),
-          message: z.string(),
-        }),
-      },
     },
-  }, async (request, reply): Promise<OrchestratorResponse> => {
+  }, async (request, reply) => {
     const { query, history } = request.body as { query: string, history?: any[] };
 
-    // Perform a single aggregated AI call for speed (< 4s target)
-    const response = await aiService.getAggregatedOrchestratorResponse(query, history);
+    try {
+      const response = await aiService.getAggregatedOrchestratorResponse(query, history);
 
-    // Cache them for the detail screen
-    if (response.jobs && response.jobs.length > 0) {
-      JobsService.saveToCache(response.jobs);
+      if (response.jobs && response.jobs.length > 0) {
+        // Safe access to static method
+        JobsService.saveToCache(response.jobs);
+      }
+
+      return response;
+    } catch (error: any) {
+      fastify.log.error(error);
+      return reply.status(500).send({
+        query,
+        params: {},
+        jobs: [],
+        message: "Neural scout is currently recalibrating. Please try again in a moment."
+      });
     }
-
-    return response;
   });
 }

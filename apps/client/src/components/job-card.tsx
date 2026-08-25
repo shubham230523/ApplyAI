@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, LayoutAnimation, Platform, UIManager } fr
 import { Job } from '@applyai/shared-types';
 import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -33,61 +34,73 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={handleNavigate}
-      className={`bg-white rounded-[24px] p-4 border ${selected ? 'border-indigo-500 ring-4 ring-indigo-50' : 'border-slate-200/60'} shadow-sm h-[260px] flex-col justify-between`}
+      className={`bg-white rounded-[20px] p-4 border ${selected ? 'border-indigo-500 ring-2 ring-indigo-50' : 'border-slate-200/60'} shadow-sm h-[220px] flex-col justify-between`}
     >
       <View>
         <View className="flex-row">
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
-              onToggle?.(job.id);
-            }}
-            className={`w-6 h-6 rounded-lg border-2 mr-3 mt-1 items-center justify-center ${selected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200'}`}
-          >
-            {selected && <SymbolView name="checkmark" size={12} tintColor="white" />}
-          </TouchableOpacity>
+          <View className="mr-3 mt-1 items-center">
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                onToggle?.(job.id);
+              }}
+              className={`w-6 h-6 rounded-lg border-2 mb-3 items-center justify-center ${selected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200'}`}
+            >
+              {selected && <SymbolView name="checkmark" size={12} tintColor="white" />}
+            </TouchableOpacity>
+
+            <Image
+              source={{ uri: job.companyLogo }}
+              style={{ width: 32, height: 32, borderRadius: 8 }}
+              contentFit="contain"
+              placeholder={{ uri: `https://api.dicebear.com/7.x/initials/svg?seed=${job.company}` }}
+            />
+          </View>
 
           <View className="flex-1">
-            <Text className="text-lg font-bold text-slate-900 tracking-tight leading-snug" style={{ fontFamily: 'Outfit' }} numberOfLines={1}>{job.title}</Text>
-            <Text className="text-[13px] font-semibold text-slate-400 mt-0.5" numberOfLines={1}>{job.company}</Text>
+            {/* Lines 1-2: Job Title */}
+            <Text className="text-[14px] font-bold text-slate-900 tracking-tight leading-snug" style={{ fontFamily: 'Outfit' }} numberOfLines={2}>{job.title}</Text>
 
-            <View className="flex-row items-center mt-2.5 gap-2">
-              <View className="bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">
-                <Text className="text-indigo-600 text-[10px] font-bold tracking-tight">{matchScore}% MATCH</Text>
+            {/* Line 3: Company Name */}
+            <Text className="text-[12px] font-semibold text-slate-400 mt-1" numberOfLines={1}>{job.company}</Text>
+
+            {/* Line 4: Match Score & Work Mode */}
+            <View className="flex-row items-center mt-2 gap-1.5">
+              <View className="bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100">
+                <Text className="text-indigo-600 text-[9px] font-bold tracking-tight">{matchScore}% MATCH</Text>
               </View>
-              <View className="bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
-                <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{job.workMode}</Text>
+              <View className="bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200">
+                <Text className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">{job.workMode}</Text>
               </View>
             </View>
 
-            <View className="flex-row flex-wrap items-center mt-3 gap-2">
-              <View className="flex-row items-center bg-slate-50 px-2 py-1 rounded-xl">
-                <SymbolView name="mappin.and.ellipse" size={10} tintColor="#64748b" />
-                <Text className="text-[11px] font-semibold text-slate-600 ml-1.5">{job.location}</Text>
+            {/* Line 5: Source */}
+            <View className="flex-row items-center mt-1.5">
+              <View className="bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
+                <Text className="text-emerald-700 text-[8px] font-black uppercase">via {job.source}</Text>
               </View>
-              <View className="flex-row items-center bg-slate-50 px-2 py-1 rounded-xl">
-                <SymbolView name="indianrupeesign.circle.fill" size={10} tintColor="#64748b" />
-                <Text className="text-[11px] font-semibold text-slate-600 ml-1.5">₹{job.salaryMin}-{job.salaryMax} LPA</Text>
+            </View>
+
+            {/* Line 6: Location & Salary */}
+            <View className="flex-row flex-wrap items-center mt-2 gap-1.5">
+              <View className="flex-row items-center bg-slate-50 px-2 py-0.5 rounded-lg">
+                <SymbolView name="mappin.and.ellipse" size={9} tintColor="#64748b" />
+                <Text className="text-[9px] font-semibold text-slate-600 ml-1" numberOfLines={1}>{job.location}</Text>
+              </View>
+              <View className="flex-row items-center bg-slate-50 px-2 py-0.5 rounded-lg">
+                <SymbolView name="indianrupeesign.circle.fill" size={9} tintColor="#64748b" />
+                <Text className="text-[9px] font-semibold text-slate-600 ml-1">
+                  {job.salaryMin && job.salaryMax ? `₹${job.salaryMin}-${job.salaryMax} LPA` : 'Not Disclosed'}
+                </Text>
               </View>
             </View>
           </View>
         </View>
       </View>
 
-      <View className="mt-3 border-t border-slate-50 pt-3 flex-row items-center justify-between">
-        <TouchableOpacity onPress={toggleExpand} className="flex-row items-center">
-          <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mr-1.5">
-            {expanded ? 'Hide Analysis' : 'Quick Preview'}
-          </Text>
-          <SymbolView
-            name={expanded ? 'chevron.up' : 'chevron.down'}
-            size={10}
-            tintColor="#64748b"
-          />
-        </TouchableOpacity>
-
-        <View className="bg-slate-900 px-3 py-1.5 rounded-lg">
-          <Text className="text-white text-[10px] font-bold uppercase tracking-widest">Details</Text>
+      <View className="mt-4 border-t border-slate-50 pt-3">
+        <View className="bg-slate-900 w-full py-2.5 rounded-xl items-center shadow-sm">
+          <Text className="text-white text-[10px] font-bold uppercase tracking-widest">View Details</Text>
         </View>
       </View>
 

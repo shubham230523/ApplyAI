@@ -9,14 +9,22 @@ const connectionString = process.env.DATABASE_URL;
 
 let dbInstance: any = null;
 
+console.log('Initializing Database connection...');
+
 if (connectionString && connectionString.startsWith('postgres')) {
   try {
-    const client = postgres(connectionString);
+    const client = postgres(connectionString, {
+      max: 1,
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
     dbInstance = drizzle(client, { schema });
+    console.log('Database instance initialized (Drizzle)');
   } catch (e) {
-    // We catch it here to prevent startup crash
-    console.error('Database connection failed:', e);
+    console.error('DATABASE CONNECTION FAILED DURING INIT:', e);
   }
+} else {
+  console.warn('DATABASE_URL missing or invalid. Running in Cache-Only mode.');
 }
 
 // Export a proxy or just the instance.

@@ -1,3 +1,20 @@
+// Global Diagnostic Handlers - MUST BE AT THE VERY TOP
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL UNCAUGHT EXCEPTION:');
+  console.error(err);
+  try {
+    console.error(JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+  } catch (e) {
+    console.error('Could not stringify error');
+  }
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
+
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -52,10 +69,15 @@ fastify.get('/health', async () => {
 });
 
 // API Routes
+console.log('Registering Profile routes...');
 fastify.register(profileRoutes, { prefix: '/api/profile' });
+console.log('Registering Orchestrator routes...');
 fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
+console.log('Registering Resume routes...');
 fastify.register(resumeRoutes, { prefix: '/api/resume' });
+console.log('Registering Application routes...');
 fastify.register(applicationRoutes, { prefix: '/api/applications' });
+console.log('Registering Jobs routes...');
 fastify.register(jobsRoutes, { prefix: '/api/jobs' });
 
 // Start Server
