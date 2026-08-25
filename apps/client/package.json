@@ -50,6 +50,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "cross-env EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=true expo start --web --clear",
+    "build": "expo export -p web",
     "lint": "expo lint"
   },
   "private": true

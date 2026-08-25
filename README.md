@@ -2,6 +2,11 @@
 
 ### The AI-First Job Search & Auto-Apply Platform
 
+> [!CAUTION]
+> **Work in Progress**: This project is currently under active development and is not yet complete. Features are being added and refined daily.
+
+[**Live Demo (Web)**](https://shubham230523.github.io/ApplyAI-/)
+
     ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it empowers candidates to find, rank, and apply for jobs using natural language.
 
 ---
@@ -45,8 +50,8 @@ Traditional job boards force you to fiddle with filters and scroll through endle
 
 1. **Clone and Install Dependencies**
    ```bash
-   git clone https://github.com/your-repo/applyai.git
-   cd applyai
+   git clone https://github.com/shubham230523/ApplyAI.git
+   cd ApplyAI
    npm install
    ```
 
