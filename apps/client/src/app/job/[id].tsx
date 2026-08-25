@@ -12,8 +12,9 @@ export default function JobDetailsScreen() {
 
   useEffect(() => {
     const fetchJob = async () => {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const response = await fetch(`http://localhost:4000/api/jobs/${id}`);
+        const response = await fetch(`${apiUrl}/api/jobs/${id}`);
         if (!response.ok) {
            throw new Error(`Server returned ${response.status}`);
         }

@@ -13,7 +13,7 @@
   }
 
   body {
-    @apply text-[18px] leading-relaxed tracking-tight text-[#334155] bg-[#fafaf9] antialiased;
+    @apply text-[16px] leading-relaxed tracking-tight text-[#334155] bg-[#fafaf9] antialiased;
   }
 }
 

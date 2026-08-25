@@ -19,7 +19,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
     >
       <View className="px-10 py-10 border-b border-slate-100/50 glass z-10 flex-row items-center justify-between">
         <View>
-          <Text className="text-4xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>Discovery Feed</Text>
+          <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>Discovery Feed</Text>
           <Text className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">
             {jobs.length} Priority Nodes Found
           </Text>
@@ -58,8 +58,8 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
             <View className="bg-slate-100 p-12 rounded-full mb-10 shadow-inner">
               <SymbolView name="sparkles" size={80} tintColor="#cbd5e1" />
             </View>
-            <Text className="text-slate-900 font-black text-4xl tracking-tighter">Hub Initialized</Text>
-            <Text className="text-slate-500 mt-4 text-center max-w-[400px] font-medium text-xl leading-relaxed">
+            <Text className="text-slate-900 font-black text-2xl tracking-tighter">Hub Initialized</Text>
+            <Text className="text-slate-500 mt-4 text-center max-w-[400px] font-medium text-lg leading-relaxed">
               Task your agent on the left to start populating your personalized discovery stream.
             </Text>
           </View>

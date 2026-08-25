@@ -99,8 +99,9 @@ export default function AssistantScreen() {
     setQuery('');
     setLoading(true);
 
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
     try {
-      const response = await fetch('http://localhost:4000/api/orchestrator/query', {
+      const response = await fetch(`${apiUrl}/api/orchestrator/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,7 +152,7 @@ export default function AssistantScreen() {
             {/* Chat Header - Soft Glass */}
             <View className="px-8 py-8 border-b border-slate-200/40 glass z-20 flex-row items-center justify-between">
               <View>
-                <Text className="text-3xl font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Agent Chat</Text>
+                <Text className="text-2xl font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Agent Chat</Text>
                 <View className="flex-row items-center mt-1.5">
                   <View className="w-2 h-2 rounded-full bg-indigo-500 mr-2.5" />
                   <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Context Aware</Text>

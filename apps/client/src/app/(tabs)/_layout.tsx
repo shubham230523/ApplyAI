@@ -38,8 +38,8 @@ export default function TabsLayout() {
       >
         {/* Sidebar */}
         <View className="w-80 border-r border-slate-100 p-8 bg-white h-full">
-          <View className="mb-12">
-            <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
+          <View className="mb-10">
+            <Text className="text-2xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
             <Text className="text-[12px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Recruitment Hub</Text>
           </View>
 
