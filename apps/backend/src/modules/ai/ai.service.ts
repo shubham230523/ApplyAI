@@ -38,9 +38,9 @@ export class AIService {
       : prompt;
 
     try {
-      // Updated to gemini-1.5-flash for maximum stability and speed
+      // Using gemini-3.6-flash as requested by user
       const result = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.6-flash',
         contents: finalPrompt
       });
 

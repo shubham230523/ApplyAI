@@ -16,6 +16,7 @@ import { SymbolView } from 'expo-symbols';
 import { JobCard } from '@/components/job-card';
 import { JobFeed } from '@/components/job-feed';
 import { Job, OrchestratorResponse } from '@applyai/shared-types';
+import { Image } from 'expo-image';
 
 interface Message {
   id: string;
@@ -173,8 +174,12 @@ export default function AssistantScreen() {
                   <Text className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Context Aware</Text>
                 </View>
               </View>
-              <TouchableOpacity className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center border border-slate-100 shadow-sm">
-                <SymbolView name="brain.head.profile" size={14} tintColor="#6366f1" />
+              <TouchableOpacity className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shadow-sm">
+                <Image
+                  source={{ uri: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Agent' }}
+                  style={{ width: '100%', height: '100%' }}
+                  contentFit="cover"
+                />
               </TouchableOpacity>
             </View>
 

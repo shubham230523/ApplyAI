@@ -44,9 +44,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
                 e.stopPropagation();
                 onToggle?.(job.id);
               }}
-              className={`w-6 h-6 rounded-lg border-2 mb-3 items-center justify-center ${selected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200'}`}
+              className="mb-3 items-center justify-center"
             >
-              {selected && <SymbolView name="checkmark" size={12} tintColor="white" />}
+              <SymbolView
+                name={selected ? "checkmark.circle.fill" : "circle"}
+                size={22}
+                tintColor={selected ? "#6366f1" : "#cbd5e1"}
+              />
             </TouchableOpacity>
 
             <Image

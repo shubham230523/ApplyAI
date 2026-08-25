@@ -132,8 +132,8 @@ export default function JobDetailsScreen() {
 
             <View className="mt-12 border-t border-slate-200/60 pt-10">
               <View className="flex-row items-center mb-6">
-                 <View className="w-9 h-9 bg-indigo-600 rounded-xl items-center justify-center mr-4 shadow-lg shadow-indigo-100">
-                    <SymbolView name="doc.text.fill" size={14} tintColor="white" />
+                 <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
+                    <SymbolView name="briefcase.fill" size={16} tintColor="#6366f1" />
                  </View>
                  <Text className="text-lg font-bold text-slate-900 tracking-tight" style={{ fontFamily: 'Outfit' }}>The Opportunity</Text>
               </View>
@@ -144,8 +144,8 @@ export default function JobDetailsScreen() {
 
             <View className="mt-12">
               <View className="flex-row items-center mb-6">
-                 <View className="w-9 h-9 bg-indigo-600 rounded-xl items-center justify-center mr-4 shadow-lg shadow-indigo-100">
-                    <SymbolView name="star.fill" size={14} tintColor="white" />
+                 <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
+                    <SymbolView name="cpu.fill" size={16} tintColor="#6366f1" />
                  </View>
                  <Text className="text-lg font-bold text-slate-900 tracking-tight" style={{ fontFamily: 'Outfit' }}>Required Stack</Text>
               </View>
