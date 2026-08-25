@@ -17,15 +17,15 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
       className="flex-1 bg-slate-50/20 mesh-gradient h-full overflow-hidden"
       style={Platform.OS === 'web' ? { height: '100%' } : { flex: 1 }}
     >
-      <View className="px-8 py-8 border-b border-slate-200/40 glass z-10 flex-row items-center justify-between">
+      <View className="px-6 py-5 border-b border-slate-200/40 glass z-10 flex-row items-center justify-between">
         <View>
-          <Text className="text-2xl font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Discovery Feed</Text>
-          <Text className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
-            {jobs.length} Priority Nodes
+          <Text className="text-xl font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Discovery Feed</Text>
+          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+            {jobs.length} Priority Nodes Found
           </Text>
         </View>
         <View className="flex-row gap-3">
-           <TouchableOpacity className="bg-slate-900 px-6 py-2.5 rounded-xl shadow-lg active:scale-95 transition-all">
+           <TouchableOpacity className="bg-slate-900 px-5 py-2 rounded-xl shadow-lg active:scale-95 transition-all">
              <Text className="text-[10px] font-black text-white uppercase tracking-widest">Logic Match</Text>
            </TouchableOpacity>
         </View>
@@ -33,7 +33,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 32, paddingBottom: 150 }}
+        contentContainerStyle={{ padding: 24, paddingBottom: 150 }}
         showsVerticalScrollIndicator={true}
       >
         {loading && jobs.length === 0 ? (

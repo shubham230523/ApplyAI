@@ -37,9 +37,9 @@ export default function TabsLayout() {
         style={Platform.OS === 'web' ? { height: '100vh' } : { flex: 1 }}
       >
         {/* Sidebar */}
-        <View className="w-64 border-r border-slate-100 p-6 bg-white h-full">
+        <View className="w-60 border-r border-slate-100 p-5 bg-white h-full">
           <View className="mb-8">
-            <Text className="text-2xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
+            <Text className="text-xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
             <Text className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Recruitment Hub</Text>
           </View>
 
@@ -65,9 +65,9 @@ export default function TabsLayout() {
           </View>
 
           <View className="pt-8 border-t border-slate-50">
-            <TouchableOpacity className="flex-row items-center px-6 py-5 rounded-[24px] bg-slate-900 shadow-2xl shadow-slate-400 active:scale-95 transition-all">
-              <SymbolView name="plus.circle.fill" size={20} tintColor="white" />
-              <Text className="ml-3 text-white font-black text-sm uppercase tracking-widest">Update AI CV</Text>
+            <TouchableOpacity className="flex-row items-center px-4 py-3 rounded-xl bg-slate-900 shadow-xl shadow-slate-200 active:scale-95 transition-all">
+              <SymbolView name="plus.circle.fill" size={16} tintColor="white" />
+              <Text className="ml-2 text-white font-bold text-xs uppercase tracking-widest">Update AI CV</Text>
             </TouchableOpacity>
           </View>
         </View>
