@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useTheme } from '@/hooks/use-theme';
+import { SymbolView } from 'expo-symbols';
 
 interface Application {
   id: string;
@@ -18,7 +16,6 @@ export default function ApplicationsScreen() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const theme = useTheme();
 
   const fetchApplications = async () => {
     try {
@@ -43,86 +40,63 @@ export default function ApplicationsScreen() {
   };
 
   const renderItem = ({ item }: { item: Application }) => (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <View style={styles.cardHeader}>
-        <ThemedText type="defaultSemiBold">{item.jobTitle}</ThemedText>
-        <View style={[styles.statusBadge, { backgroundColor: item.status === 'applied' ? '#e1f5fe' : '#f5f5f5' }]}>
-          <Text style={[styles.statusText, { color: item.status === 'applied' ? '#0288d1' : '#757575' }]}>
-            {item.status.toUpperCase()}
+    <View className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-4">
+      <View className="flex-row justify-between items-start mb-2">
+        <View className="flex-1 pr-4">
+          <Text className="text-lg font-bold text-gray-900">{item.jobTitle}</Text>
+          <Text className="text-sm font-medium text-gray-500 mt-1">{item.company}</Text>
+        </View>
+        <View className={`px-3 py-1 rounded-full ${item.status === 'applied' ? 'bg-blue-50' : 'bg-gray-50'}`}>
+          <Text className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'applied' ? 'text-blue-600' : 'text-gray-500'}`}>
+            {item.status}
           </Text>
         </View>
       </View>
-      <ThemedText themeColor="textSecondary">{item.company} • {item.location}</ThemedText>
-      <ThemedText type="small" style={{ marginTop: 8 }}>
-        Applied on: {new Date(item.appliedAt).toLocaleDateString()}
-      </ThemedText>
-    </ThemedView>
+
+      <View className="flex-row items-center mt-2">
+        <SymbolView name="mappin.circle" size={12} tintColor="#9ca3af" />
+        <Text className="text-xs text-gray-400 ml-1">{item.location}</Text>
+        <Text className="text-gray-300 mx-2">•</Text>
+        <SymbolView name="calendar" size={12} tintColor="#9ca3af" />
+        <Text className="text-xs text-gray-400 ml-1">
+          {new Date(item.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </Text>
+      </View>
+    </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <ThemedText type="title">My Applications</ThemedText>
-      </View>
-
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.tint} />
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="flex-1 w-full max-w-4xl mx-auto px-6">
+        <View className="py-8">
+          <Text className="text-3xl font-black text-gray-900 tracking-tight">Applications</Text>
+          <Text className="text-gray-500 mt-1 font-medium">Tracking your path to your next role</Text>
         </View>
-      ) : (
-        <FlatList
-          data={applications}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.tint} />
-          }
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <ThemedText themeColor="textSecondary">No applications found.</ThemedText>
-            </View>
-          }
-        />
-      )}
+
+        {loading ? (
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator color="#2563eb" />
+          </View>
+        ) : (
+          <FlatList
+            data={applications}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+            }
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                <SymbolView name="doc.text.magnifyingglass" size={48} tintColor="#d1d5db" />
+                <Text className="text-gray-400 mt-4 font-bold text-lg">No applications yet</Text>
+                <Text className="text-gray-400 mt-1">Start chatting with the assistant to apply</Text>
+              </View>
+            }
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 20,
-  },
-  list: {
-    padding: 20,
-    gap: 16,
-  },
-  card: {
-    padding: 16,
-    borderRadius: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 100,
-  },
-});

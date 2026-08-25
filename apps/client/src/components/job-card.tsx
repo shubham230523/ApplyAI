@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Text, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Job } from '@applyai/shared-types';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -16,58 +16,86 @@ interface JobCardProps {
 }
 
 export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, matchScore = 85 }) => {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
 
-  const toggleExpand = () => {
+  const toggleExpand = (e: any) => {
+    e.stopPropagation();
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(!expanded);
   };
 
+  const handleNavigate = () => {
+    router.push(`/job/${job.id}`);
+  };
+
   return (
-    <View style={[styles.card, selected && styles.selectedCard]}>
-      <View style={styles.header}>
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={handleNavigate}
+      className={`bg-white rounded-[28px] p-6 mb-4 border ${selected ? 'border-slate-900 ring-2 ring-slate-100' : 'border-slate-100'} shadow-sm shadow-slate-200/50`}
+    >
+      <View className="flex-row">
         <TouchableOpacity
-          onPress={() => onToggle?.(job.id)}
-          style={[styles.toggle, selected && styles.toggleActive]}
+          onPress={(e) => {
+            e.stopPropagation();
+            onToggle?.(job.id);
+          }}
+          className={`w-6 h-6 rounded-lg border-2 mr-4 mt-1 items-center justify-center ${selected ? 'bg-slate-900 border-slate-900' : 'border-slate-200'}`}
         >
-          {selected && <SymbolView name="checkmark" size={14} tintColor="white" />}
+          {selected && <SymbolView name="checkmark" size={12} tintColor="white" />}
         </TouchableOpacity>
 
-        <View style={styles.content}>
-          <View style={styles.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{job.title}</Text>
-              <Text style={styles.company}>{job.company}</Text>
+        <View className="flex-1">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1 pr-3">
+              <Text className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{job.title}</Text>
+              <View className="flex-row items-center mt-2">
+                <Text className="text-[16px] font-bold text-slate-500">{job.company}</Text>
+                <View className="mx-2 w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <Text className="text-[12px] font-black text-slate-400 uppercase tracking-widest">{job.workMode}</Text>
+              </View>
             </View>
-            <View style={styles.scoreBadge}>
-              <Text style={styles.scoreText}>{matchScore}% Match</Text>
+            <View className="bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+              <Text className="text-emerald-700 text-[10px] font-black tracking-tighter">{matchScore}% MATCH</Text>
             </View>
           </View>
 
-          <View style={styles.detailsRow}>
-            <Text style={styles.detailItem}>{job.location}</Text>
-            <Text style={styles.detailItem}>•</Text>
-            <Text style={styles.detailItem}>₹{job.salaryMin}-{job.salaryMax} LPA</Text>
+          <View className="flex-row flex-wrap items-center mt-5 gap-2">
+            <View className="flex-row items-center bg-slate-50 px-3 py-2 rounded-xl">
+              <SymbolView name="mappin.and.ellipse" size={10} tintColor="#64748b" />
+              <Text className="text-[11px] font-bold text-slate-600 ml-2">{job.location}</Text>
+            </View>
+            <View className="flex-row items-center bg-slate-50 px-3 py-2 rounded-xl">
+              <SymbolView name="indianrupeesign.circle.fill" size={10} tintColor="#64748b" />
+              <Text className="text-[11px] font-bold text-slate-600 ml-2">₹{job.salaryMin}-{job.salaryMax} LPA</Text>
+            </View>
           </View>
 
-          <TouchableOpacity onPress={toggleExpand} style={styles.expandButton}>
-            <Text style={styles.expandButtonText}>
-              {expanded ? 'Show Less' : 'View Details'}
-            </Text>
-            <SymbolView
-              name={expanded ? 'chevron.up' : 'chevron.down'}
-              size={14}
-              tintColor="#2563eb"
-            />
-          </TouchableOpacity>
+          <View className="mt-5 border-t border-slate-50 pt-5 flex-row items-center justify-between">
+            <TouchableOpacity onPress={toggleExpand} className="flex-row items-center">
+              <Text className="text-slate-900 text-[11px] font-black uppercase tracking-widest mr-2">
+                {expanded ? 'Hide Meta' : 'Quick View'}
+              </Text>
+              <SymbolView
+                name={expanded ? 'chevron.up' : 'chevron.down'}
+                size={12}
+                tintColor="#0f172a"
+              />
+            </TouchableOpacity>
+
+            <View className="bg-slate-900 px-4 py-2 rounded-full">
+              <Text className="text-white text-[10px] font-black uppercase tracking-widest">View Detail</Text>
+            </View>
+          </View>
 
           {expanded && (
-            <View style={styles.expandedContent}>
-              <Text style={styles.description}>{job.description}</Text>
-              <View style={styles.skillsRow}>
-                {job.skills?.map((skill, idx) => (
-                  <View key={idx} style={styles.skillTag}>
-                    <Text style={styles.skillText}>{skill}</Text>
+            <View className="mt-4 animate-in fade-in slide-in-from-top-2">
+              <Text className="text-[13px] text-slate-500 leading-relaxed font-medium mb-5" numberOfLines={3}>{job.description}</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {job.skills?.slice(0, 4).map((skill, idx) => (
+                  <View key={idx} className="bg-slate-100 px-2.5 py-1 rounded-md">
+                    <Text className="text-[9px] text-slate-500 font-bold uppercase">{skill}</Text>
                   </View>
                 ))}
               </View>
@@ -75,120 +103,6 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
           )}
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  selectedCard: {
-    borderColor: '#2563eb',
-    backgroundColor: '#eff6ff',
-  },
-  header: {
-    flexDirection: 'row',
-  },
-  toggle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    marginRight: 12,
-    marginTop: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-  },
-  content: {
-    flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  company: {
-    fontSize: 14,
-    color: '#4b5563',
-    marginTop: 2,
-  },
-  scoreBadge: {
-    backgroundColor: '#dcfce7',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  scoreText: {
-    color: '#166534',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    marginTop: 8,
-    gap: 8,
-  },
-  detailItem: {
-    fontSize: 13,
-    color: '#6b7280',
-  },
-  expandButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 4,
-  },
-  expandButtonText: {
-    color: '#2563eb',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  expandedContent: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  description: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-  },
-  skillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  skillTag: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  skillText: {
-    fontSize: 12,
-    color: '#4b5563',
-  },
-});

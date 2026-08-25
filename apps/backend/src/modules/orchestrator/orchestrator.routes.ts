@@ -25,20 +25,14 @@ export async function orchestratorRoutes(fastify: FastifyInstance) {
   }, async (request, reply): Promise<OrchestratorResponse> => {
     const { query } = request.body as { query: string };
 
-    // 1. Extract parameters using AI
-    const params = await aiService.extractJobSearchParams(query);
+    // Perform a single aggregated AI call for speed (< 4s target)
+    const response = await aiService.getAggregatedOrchestratorResponse(query);
 
-    // 2. Search jobs
-    const jobs = await jobsService.searchJobs(params);
+    // Cache them for the detail screen
+    if (response.jobs && response.jobs.length > 0) {
+      JobsService.saveToCache(response.jobs);
+    }
 
-    // 3. Generate a friendly message
-    const message = await aiService.generateResponse(query, jobs.length);
-
-    return {
-      query,
-      params,
-      jobs,
-      message,
-    };
+    return response;
   });
 }

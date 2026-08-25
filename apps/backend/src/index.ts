@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
@@ -8,9 +11,7 @@ import { profileRoutes } from './modules/profiles/profile.routes.js';
 import { orchestratorRoutes } from './modules/orchestrator/orchestrator.routes.js';
 import { resumeRoutes } from './modules/resumes/resume.routes.js';
 import { applicationRoutes } from './modules/applications/application.routes.js';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
+import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
   logger: true,
@@ -55,6 +56,7 @@ fastify.register(profileRoutes, { prefix: '/api/profile' });
 fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
 fastify.register(resumeRoutes, { prefix: '/api/resume' });
 fastify.register(applicationRoutes, { prefix: '/api/applications' });
+fastify.register(jobsRoutes, { prefix: '/api/jobs' });
 
 // Start Server
 const start = async () => {

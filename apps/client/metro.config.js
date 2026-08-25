@@ -22,4 +22,8 @@ config.resolver.nodeModulesPaths = [
 // This helps prevent duplicate package issues
 config.resolver.disableHierarchicalLookup = true;
 
+// 4. Support for Expo Router and monorepo exports
+config.resolver.unstable_enablePackageExports = true;
+config.resolver.sourceExts.push("mjs");
+
 module.exports = withNativeWind(config, { input: "./src/global.css" });

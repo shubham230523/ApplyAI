@@ -42,6 +42,7 @@ export class ResumeService {
     rawText: string,
     profileData: CandidateProfile
   ) {
+    if (!db) return;
     // Save Resume entry
     await db.insert(resumes).values({
       userId,

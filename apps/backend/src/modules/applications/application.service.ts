@@ -8,6 +8,7 @@ const aiService = new AIService();
 
 export class ApplicationService {
   async applyToJob(userId: string, jobId: string) {
+    if (!db) throw new Error('Database connection not available');
     // 1. Fetch Job and User Profile/Resume
     const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
     if (!job) throw new Error('Job not found');
@@ -47,6 +48,7 @@ export class ApplicationService {
   }
 
   async getUserApplications(userId: string) {
+    if (!db) return [];
     return db.select({
       id: applications.id,
       status: applications.status,

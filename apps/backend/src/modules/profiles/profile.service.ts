@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { ProfileInput } from './profile.schema.js';
 
 export async function getProfile(userId: string) {
+  if (!db) return null;
   const [profile] = await db
     .select()
     .from(profiles)
@@ -13,6 +14,7 @@ export async function getProfile(userId: string) {
 }
 
 export async function updateProfile(userId: string, data: ProfileInput) {
+  if (!db) return null;
   // Check if profile exists
   const existing = await getProfile(userId);
 
@@ -39,6 +41,7 @@ export async function updateProfile(userId: string, data: ProfileInput) {
 }
 
 export async function getOrCreateUser(email: string) {
+  if (!db) throw new Error('Database not initialized');
   const [existing] = await db
     .select()
     .from(users)

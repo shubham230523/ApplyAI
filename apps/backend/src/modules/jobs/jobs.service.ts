@@ -5,15 +5,43 @@ import { sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 export class JobsService {
+  private static aiJobsCache = new Map<string, Job>();
+
+  static saveToCache(jobList: Job[]) {
+    jobList.forEach(job => this.aiJobsCache.set(job.id, job));
+  }
+
   async searchJobs(params: JobSearchParams): Promise<Job[]> {
     // In a real scenario, this would call multiple job board APIs
     // For now, we'll return mock data based on the extracted params
     const mockJobs = this.generateMockJobs(params);
 
-    // Save/Sync with DB
-    await this.syncJobsWithDB(mockJobs);
+    // Save to Cache for Detail Screen
+    JobsService.saveToCache(mockJobs);
+
+    // Save/Sync with DB (optional for MVP)
+    try {
+      await this.syncJobsWithDB(mockJobs);
+    } catch (e) {
+      console.warn('DB Sync failed, continuing with cache');
+    }
 
     return mockJobs;
+  }
+
+  async getJobById(id: string): Promise<Job | null> {
+    // Check cache first (for AI/Mock jobs)
+    const cached = JobsService.aiJobsCache.get(id);
+    if (cached) return cached;
+
+    // Fallback to DB
+    try {
+      if (!db) return null;
+      const result = await db.select().from(jobs).where(sql`${jobs.id} = ${id}`);
+      return (result[0] as Job) || null;
+    } catch (e) {
+      return null;
+    }
   }
 
   private generateMockJobs(params: JobSearchParams): Job[] {
@@ -49,6 +77,7 @@ export class JobsService {
   }
 
   private async syncJobsWithDB(jobList: Job[]) {
+    if (!db) return;
     for (const job of jobList) {
       await db.insert(jobs).values({
         source: job.source,

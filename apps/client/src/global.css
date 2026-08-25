@@ -5,12 +5,33 @@
 @layer base {
   :root {
     --font-display:
-      Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-      Segoe UI Symbol, Noto Color Emoji;
+      'SF Pro Display', 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-    --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
+      'SF Mono', 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, monospace;
+    --font-rounded: 'SF Pro Display', 'Clash Display', 'SF Pro Rounded', sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
+  }
+
+  body {
+    @apply text-[22px] leading-[1.6] tracking-tight text-slate-900 antialiased font-normal;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/80 border border-white/20 backdrop-blur-2xl;
+  }
+
+  .glass-dark {
+    @apply bg-slate-900/80 border border-white/10 backdrop-blur-2xl;
+  }
+
+  .mesh-gradient {
+    background-color: #ffffff;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.03) 0px, transparent 50%);
   }
 }
 

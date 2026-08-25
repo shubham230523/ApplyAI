@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useTheme } from '@/hooks/use-theme';
+import { SymbolView } from 'expo-symbols';
 import { useAuth } from '@/contexts/auth';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const theme = useTheme();
 
   const handleUploadResume = async () => {
     try {
@@ -58,68 +55,74 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Your Profile</ThemedText>
-        <ThemedText themeColor="textSecondary">{user?.email}</ThemedText>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <ScrollView className="flex-1 w-full max-w-4xl mx-auto px-6">
+        <View className="py-8">
+          <Text className="text-3xl font-black text-gray-900 tracking-tight">Profile</Text>
+          <Text className="text-gray-500 mt-1 font-medium">{user?.email || 'Guest User'}</Text>
+        </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          <ThemedView type="backgroundElement" style={styles.section}>
-            <ThemedText type="subtitle">Resume</ThemedText>
-            <TouchableOpacity
-              onPress={handleUploadResume}
-              disabled={uploading}
-              className="bg-blue-600 p-4 rounded-xl mt-4 flex-row justify-center items-center"
-            >
-              {uploading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-white font-bold">Upload & Parse Resume (PDF)</Text>
-              )}
-            </TouchableOpacity>
-          </ThemedView>
+        <View className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-6">
+          <View className="flex-row items-center mb-6">
+            <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
+              <SymbolView name="person.fill" size={32} tintColor="#2563eb" />
+            </View>
+            <View className="ml-4">
+              <Text className="text-xl font-bold text-gray-900">{profile?.name || 'Complete your profile'}</Text>
+              <Text className="text-gray-400 font-medium">AI Recruitment Ready</Text>
+            </View>
+          </View>
 
-          {profile && (
-            <ThemedView type="backgroundElement" style={styles.section}>
-              <ThemedText type="subtitle">Extracted Details</ThemedText>
-              <View className="mt-4 gap-2">
-                <ThemedText>Name: {profile.name}</ThemedText>
-                <ThemedText>Experience: {profile.yearsExperience} years</ThemedText>
-                <ThemedText>Skills: {profile.skills?.join(', ')}</ThemedText>
-                <ThemedText>Headline: {profile.headline}</ThemedText>
-              </View>
-            </ThemedView>
-          )}
+          <Text className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Resume & AI Data</Text>
 
           <TouchableOpacity
-            onPress={signOut}
-            className="bg-red-500 p-4 rounded-xl mt-8"
+            onPress={handleUploadResume}
+            disabled={uploading}
+            className="bg-blue-600 p-4 rounded-2xl flex-row justify-center items-center shadow-lg shadow-blue-100"
           >
-            <Text className="text-white text-center font-bold">Sign Out</Text>
+            {uploading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <SymbolView name="doc.fill.badge.plus" size={18} tintColor="white" />
+                <Text className="text-white font-bold ml-2">Update AI Profile (PDF)</Text>
+              </>
+            )}
           </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+        </View>
+
+        {profile && (
+          <View className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-6">
+            <Text className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Experience Highlights</Text>
+
+            <View className="gap-6">
+              <View>
+                <Text className="text-gray-400 text-[10px] font-bold uppercase mb-1">Headline</Text>
+                <Text className="text-gray-900 font-medium text-lg leading-tight">{profile.headline || 'Not set'}</Text>
+              </View>
+
+              <View className="flex-row gap-8">
+                <View>
+                  <Text className="text-gray-400 text-[10px] font-bold uppercase mb-1">Experience</Text>
+                  <Text className="text-gray-900 font-bold text-lg">{profile.yearsExperience} Years</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-gray-400 text-[10px] font-bold uppercase mb-1">Top Skills</Text>
+                  <Text className="text-gray-900 font-bold text-lg" numberOfLines={1}>{profile.skills?.slice(0, 3).join(', ')}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <TouchableOpacity
+          onPress={signOut}
+          className="flex-row items-center justify-center p-5 bg-red-50 rounded-2xl border border-red-100 mb-20"
+        >
+          <SymbolView name="rectangle.portrait.and.arrow.right" size={16} tintColor="#ef4444" />
+          <Text className="text-red-500 font-bold ml-2">Sign Out Securely</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    padding: 20,
-  },
-  scroll: {
-    flex: 1,
-    marginTop: 20,
-  },
-  scrollContent: {
-    gap: 20,
-  },
-  section: {
-    padding: 20,
-    borderRadius: 16,
-  },
-});

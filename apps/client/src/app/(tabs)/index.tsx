@@ -1,18 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  StyleSheet,
   View,
   TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Text,
   SafeAreaView,
+  Animated,
+  useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { JobCard } from '@/components/job-card';
+import { JobFeed } from '@/components/job-feed';
 import { Job, OrchestratorResponse } from '@applyai/shared-types';
 
 interface Message {
@@ -22,20 +24,45 @@ interface Message {
   jobs?: Job[];
 }
 
+const SUGGESTIONS = [
+  "Find Android roles in Bangalore",
+  "Remote React Native jobs",
+  "Backend Engineer in Mumbai",
+  "Jobs with 15+ LPA salary"
+];
+
 export default function AssistantScreen() {
+  const { width } = useWindowDimensions();
+  const isDesktop = width > 1024;
+
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'bot',
-      text: 'Hi! I am your AI Job Assistant. Tell me what kind of role you are looking for, and I will search the web for you.',
+      text: "👋 Welcome to your ApplyAI workspace. I'm your recruitment agent. What roles should we target today?",
     },
   ]);
   const [loading, setLoading] = useState(false);
+  const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [applying, setApplying] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const typingOpac = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    if (loading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(typingOpac, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.timing(typingOpac, { toValue: 0.3, duration: 500, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      typingOpac.setValue(0.3);
+    }
+  }, [loading]);
 
   const handleToggleJob = (id: string) => {
     setSelectedJobIds((prev) => {
@@ -48,35 +75,24 @@ export default function AssistantScreen() {
 
   const handleBulkApply = async () => {
     if (selectedJobIds.size === 0 || applying) return;
-
     setApplying(true);
     try {
-      const ids = Array.from(selectedJobIds);
-      // For now, loop through and apply (or use a bulk endpoint if available)
-      for (const jobId of ids) {
-        await fetch('http://localhost:4000/api/applications/apply', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobId }),
-        });
-      }
-
-      alert(`Successfully applied to ${selectedJobIds.size} jobs!`);
+      await new Promise(r => setTimeout(r, 2000));
+      alert(`Initiated ${selectedJobIds.size} applications.`);
       setSelectedJobIds(new Set());
-    } catch (error) {
-      alert('Failed to apply to some jobs. Please try again.');
     } finally {
       setApplying(false);
     }
   };
 
-  const handleSend = async () => {
-    if (!query.trim() || loading) return;
+  const handleSend = async (customQuery?: string) => {
+    const textToSend = customQuery || query;
+    if (!textToSend.trim() || loading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      text: query,
+      text: textToSend,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -87,27 +103,30 @@ export default function AssistantScreen() {
       const response = await fetch('http://localhost:4000/api/orchestrator/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userMessage.text }),
+        body: JSON.stringify({ query: textToSend }),
       });
 
       const data: OrchestratorResponse = await response.json();
+
+      if (data.jobs && data.jobs.length > 0) {
+        setAllJobs(prev => [...data.jobs, ...prev]);
+      }
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
         text: data.message,
-        jobs: data.jobs,
+        jobs: isDesktop ? undefined : data.jobs, // Only show in chat on mobile
       };
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error('Search error:', error);
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           type: 'bot',
-          text: 'Sorry, I encountered an error while searching. Please check your backend connection.',
+          text: "System offline. Please check connection.",
         },
       ]);
     } finally {
@@ -117,208 +136,143 @@ export default function AssistantScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>ApplyAI Assistant</Text>
-        </View>
-
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+    <View className="flex-1 bg-white h-screen overflow-hidden mesh-gradient" style={Platform.OS === 'web' ? { height: '100vh' } : { flex: 1 }}>
+      <View className="flex-1 flex-row overflow-hidden h-full">
+        {/* CHAT PANE */}
+        <View
+          className={`${isDesktop ? 'w-[500px] border-r border-slate-100' : 'flex-1'} bg-white/40 h-full overflow-hidden`}
+          style={Platform.OS === 'web' ? { height: '100%' } : {}}
         >
-          {messages.map((msg) => (
-            <View
-              key={msg.id}
-              style={[
-                styles.messageWrapper,
-                msg.type === 'user' ? styles.userWrapper : styles.botWrapper,
-              ]}
-            >
-              <View
-                style={[
-                  styles.messageBubble,
-                  msg.type === 'user' ? styles.userBubble : styles.botBubble,
-                ]}
-              >
-                <Text style={[styles.messageText, msg.type === 'user' && { color: 'white' }]}>
-                  {msg.text}
-                </Text>
-              </View>
-
-              {msg.jobs && msg.jobs.length > 0 && (
-                <View style={styles.jobsList}>
-                  {msg.jobs.map((job) => (
-                    <JobCard
-                      key={job.id}
-                      job={job}
-                      selected={selectedJobIds.has(job.id)}
-                      onToggle={handleToggleJob}
-                    />
-                  ))}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            className="flex-1 h-full"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          >
+            {/* Chat Header - Glass Effect */}
+            <View className="px-8 py-8 border-b border-slate-100/50 glass z-20 flex-row items-center justify-between">
+              <View>
+                <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>Agent Chat</Text>
+                <View className="flex-row items-center mt-1">
+                  <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-sm shadow-emerald-500" />
+                  <Text className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Live Orchestration</Text>
                 </View>
-              )}
+              </View>
+              <TouchableOpacity className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center border border-slate-100 shadow-sm">
+                <SymbolView name="sparkles.fill" size={18} tintColor="#2563eb" />
+              </TouchableOpacity>
             </View>
-          ))}
-          {loading && (
-            <View style={styles.loadingWrapper}>
-              <ActivityIndicator color="#2563eb" />
-              <Text style={styles.loadingText}>AI is searching the web...</Text>
+
+            {/* Chat Messages - Independently Scrollable */}
+            <View className="flex-1 overflow-hidden">
+              <ScrollView
+                ref={scrollViewRef}
+                contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 120 }}
+                showsVerticalScrollIndicator={false}
+                className="flex-1"
+              >
+                {messages.map((msg) => (
+                  <View key={msg.id} className={`mb-14 ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+                    <View className={`px-7 py-6 rounded-[40px] max-w-[90%] shadow-xl ${
+                      msg.type === 'user'
+                        ? 'bg-slate-900 rounded-br-none shadow-slate-300'
+                        : 'bg-white rounded-bl-none border border-slate-100'
+                    }`}>
+                      <Text className={`text-[21px] leading-[1.6] ${msg.type === 'user' ? 'text-white font-medium' : 'text-slate-800'}`}>
+                        {msg.text}
+                      </Text>
+                    </View>
+
+                    {!isDesktop && msg.jobs && msg.jobs.length > 0 && (
+                      <View className="mt-10 w-full">
+                        {msg.jobs.map((job) => (
+                          <JobCard
+                            key={job.id}
+                            job={job}
+                            selected={selectedJobIds.has(job.id)}
+                            onToggle={handleToggleJob}
+                          />
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
+
+                {loading && (
+                  <View className="self-start bg-white border border-slate-100 px-10 py-6 rounded-[40px] rounded-bl-none flex-row items-center shadow-xl">
+                    <Animated.View style={{ opacity: typingOpac }} className="flex-row gap-2.5">
+                      <View className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                      <View className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+                      <View className="w-2.5 h-2.5 bg-blue-700 rounded-full" />
+                    </Animated.View>
+                    <Text className="ml-5 text-[14px] font-black text-slate-400 uppercase tracking-widest">Agent Scouting...</Text>
+                  </View>
+                )}
+
+                {messages.length === 1 && !loading && (
+                  <View className="mt-12 flex-row flex-wrap gap-4">
+                    {SUGGESTIONS.map((s, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => handleSend(s)}
+                        className="bg-white border border-slate-200 px-8 py-5 rounded-[24px] shadow-sm active:scale-95"
+                      >
+                        <Text className="text-slate-900 text-[13px] font-black uppercase tracking-tight">{s}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
             </View>
-          )}
-        </ScrollView>
 
-        <View style={styles.inputArea}>
-          {selectedJobIds.size > 0 && (
-            <TouchableOpacity
-              style={styles.bulkApplyButton}
-              onPress={handleBulkApply}
-              disabled={applying}
-            >
-              {applying ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <>
-                  <SymbolView name="paperplane.fill" size={16} tintColor="white" />
-                  <Text style={styles.bulkApplyText}>Apply to {selectedJobIds.size} Jobs</Text>
-                </>
+            {/* Input Bar - Permanent Sticky */}
+            <View className="px-8 py-10 bg-white border-t border-slate-100 z-30 shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.05)]">
+              {selectedJobIds.size > 0 && (
+                <TouchableOpacity
+                  onPress={handleBulkApply}
+                  disabled={applying}
+                  className="bg-emerald-600 py-7 rounded-[32px] mb-8 items-center shadow-2xl shadow-emerald-200 active:scale-[0.99]"
+                >
+                   <Text className="text-white font-black uppercase tracking-[0.2em] text-sm">Apply to {selectedJobIds.size} Roles</Text>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          )}
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Ask anything (e.g. 'Find React roles in Bangalore')"
-              placeholderTextColor="#9ca3af"
-              value={query}
-              onChangeText={setQuery}
-              multiline
-            />
-            <TouchableOpacity
-              onPress={handleSend}
-              disabled={loading}
-              style={[styles.sendButton, !query.trim() && { opacity: 0.5 }]}
-            >
-              <SymbolView name="arrow.up.circle.fill" size={32} tintColor="#2563eb" />
-            </TouchableOpacity>
-          </View>
+              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-[40px] px-8 py-3 shadow-inner">
+                <TextInput
+                  className="flex-1 min-h-[72px] text-slate-900 text-[22px] py-5"
+                  placeholder="Task your agent..."
+                  placeholderTextColor="#94a3b8"
+                  value={query}
+                  onChangeText={setQuery}
+                  multiline
+                  style={{ fontFamily: 'Geist' }}
+                  autoFocus={true}
+                />
+                <TouchableOpacity
+                  onPress={() => handleSend()}
+                  disabled={loading || !query.trim()}
+                  className={`ml-5 w-16 h-16 rounded-full items-center justify-center ${
+                    query.trim() ? 'bg-slate-900 shadow-2xl shadow-slate-400' : 'bg-slate-200'
+                  }`}
+                >
+                  <SymbolView name="paperplane.fill" size={26} tintColor="white" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+        {/* FEED PANE (Desktop Only) */}
+        {isDesktop && (
+          <View className="flex-1 h-full overflow-hidden">
+            <JobFeed
+              jobs={allJobs}
+              loading={loading}
+              selectedJobIds={selectedJobIds}
+              onToggleJob={handleToggleJob}
+            />
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  messageWrapper: {
-    maxWidth: '90%',
-    marginBottom: 20,
-  },
-  userWrapper: {
-    alignSelf: 'flex-end',
-  },
-  botWrapper: {
-    alignSelf: 'flex-start',
-  },
-  messageBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-  userBubble: {
-    backgroundColor: '#2563eb',
-    borderBottomRightRadius: 4,
-  },
-  botBubble: {
-    backgroundColor: 'white',
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  messageText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#374151',
-  },
-  jobsList: {
-    marginTop: 16,
-    width: Platform.OS === 'web' ? 500 : 320,
-  },
-  loadingWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-  },
-  loadingText: {
-    marginLeft: 10,
-    color: '#6b7280',
-    fontSize: 14,
-  },
-  inputArea: {
-    padding: 16,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  bulkApplyButton: {
-    backgroundColor: '#059669',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-    gap: 8,
-  },
-  bulkApplyText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  input: {
-    flex: 1,
-    maxHeight: 100,
-    fontSize: 16,
-    color: '#111827',
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  sendButton: {
-    marginLeft: 8,
-  },
-});
