@@ -12,6 +12,7 @@ export async function orchestratorRoutes(fastify: FastifyInstance) {
     schema: {
       body: z.object({
         query: z.string(),
+        history: z.array(z.any()).optional(),
       }),
       response: {
         200: z.object({
@@ -23,10 +24,10 @@ export async function orchestratorRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply): Promise<OrchestratorResponse> => {
-    const { query } = request.body as { query: string };
+    const { query, history } = request.body as { query: string, history?: any[] };
 
     // Perform a single aggregated AI call for speed (< 4s target)
-    const response = await aiService.getAggregatedOrchestratorResponse(query);
+    const response = await aiService.getAggregatedOrchestratorResponse(query, history);
 
     // Cache them for the detail screen
     if (response.jobs && response.jobs.length > 0) {

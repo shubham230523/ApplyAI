@@ -41,7 +41,7 @@ export class AIService {
     const body: any = {
       model: MODEL,
       messages,
-      reasoning: { enabled: true },
+      // reasoning: { enabled: true }, // DISABLED for speed as per implementation plan
     };
 
     if (jsonSchema) {
@@ -83,21 +83,31 @@ export class AIService {
     }
   }
 
-  async getAggregatedOrchestratorResponse(query: string): Promise<OrchestratorResponse> {
+  async getAggregatedOrchestratorResponse(query: string, history: any[] = []): Promise<OrchestratorResponse> {
     const messages = [
       {
         role: 'system',
         content: `You are an elite recruitment AI orchestrator for ApplyAI.
-        Your goal is to process a user query and perform three tasks in ONE response:
+        Your goal is to process a user query and conversation history to perform three tasks in ONE response:
         1. Extract structured search parameters.
-        2. Generate 5-7 highly realistic job listings that feel like they come from top platforms (LinkedIn, Wellfound).
-        3. Write a friendly, professional, and slightly enthusiastic response to the user.
+        2. Generate 5-7 highly realistic job listings. Ensure each job has a REALISTIC applicationUrl (e.g., from LinkedIn, Indeed, or a company's career page).
+        3. Write a professional and friendly response.
+
+        ### CONTEXT AWARENESS & FILTERING RULES:
+        - If the user asks to "filter", "remove", or "refine" the previous results (e.g., "only hybrid", "older than 2 weeks"), you MUST look at the previous jobs and parameters in the history.
+        - Your new "jobs" list should strictly follow the user's new constraint while maintaining the original role context.
+        - DO NOT reset the search to unrelated roles (like full-stack or QA) if the original query was about "Android".
+        - If you are generating new jobs, ensure they are distinct but highly relevant.
 
         CRITICAL: Return ONLY a JSON object. No markdown. No text outside.`,
       },
+      ...history.map(m => ({
+        role: m.type === 'user' ? 'user' : 'assistant',
+        content: m.text
+      })),
       {
         role: 'user',
-        content: `User Query: "${query}"`,
+        content: query,
       },
     ];
 
@@ -127,8 +137,9 @@ export class AIService {
               skills: { type: 'array', items: { type: 'string' } },
               workMode: { type: 'string', enum: ['remote', 'hybrid', 'onsite'] },
               experienceMin: { type: 'number' },
+              applicationUrl: { type: 'string' },
             },
-            required: ['title', 'company', 'location', 'description', 'skills', 'workMode'],
+            required: ['title', 'company', 'location', 'description', 'skills', 'workMode', 'applicationUrl'],
           },
         },
         message: { type: 'string' },
@@ -159,9 +170,9 @@ export class AIService {
         salaryCurrency: 'INR',
         skills: job.skills,
         postedAt: new Date().toISOString(),
-        applicationUrl: 'https://example.com/apply',
+        applicationUrl: job.applicationUrl || 'https://www.linkedin.com/jobs',
         applicationMethod: 'url',
-        sourceUrl: 'https://example.com/job',
+        sourceUrl: job.applicationUrl || 'https://www.linkedin.com/jobs',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
@@ -300,8 +311,9 @@ export class AIService {
           skills: { type: 'array', items: { type: 'string' } },
           workMode: { type: 'string', enum: ['remote', 'hybrid', 'onsite'] },
           experienceMin: { type: 'number' },
+          applicationUrl: { type: 'string' },
         },
-        required: ['title', 'company', 'location', 'description', 'skills', 'workMode'],
+        required: ['title', 'company', 'location', 'description', 'skills', 'workMode', 'applicationUrl'],
       },
     };
 
@@ -328,9 +340,9 @@ export class AIService {
         salaryCurrency: 'INR',
         skills: job.skills,
         postedAt: new Date().toISOString(),
-        applicationUrl: 'https://example.com/apply',
+        applicationUrl: job.applicationUrl || 'https://www.linkedin.com/jobs',
         applicationMethod: 'url',
-        sourceUrl: 'https://example.com/job',
+        sourceUrl: job.applicationUrl || 'https://www.linkedin.com/jobs',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
