@@ -30,6 +30,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
     router.push(`/job/${job.id}`);
   };
 
+  const formatSalary = (min: number | undefined, max: number | undefined) => {
+    if (!min && !max) return 'Not Disclosed';
+    const convert = (val: number) => {
+      if (val > 100000) return (val / 100000).toFixed(1);
+      if (val > 1000) return (val / 1000).toFixed(1);
+      return val;
+    };
+    const minLPA = min ? convert(min) : '';
+    const maxLPA = max ? convert(max) : '';
+    if (min && max) return `₹${minLPA}-${maxLPA} LPA`;
+    return min ? `₹${minLPA} LPA+` : `Up to ₹${maxLPA} LPA`;
+  };
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
@@ -94,7 +107,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
               <View className="flex-row items-center bg-slate-50 px-2 py-0.5 rounded-lg">
                 <SymbolView name="indianrupeesign.circle.fill" size={9} tintColor="#64748b" />
                 <Text className="text-[9px] font-semibold text-slate-600 ml-1">
-                  {job.salaryMin && job.salaryMax ? `₹${job.salaryMin}-${job.salaryMax} LPA` : 'Not Disclosed'}
+                  {formatSalary(job.salaryMin, job.salaryMax)}
                 </Text>
               </View>
             </View>

@@ -63,6 +63,82 @@ export class AIService {
     }
   }
 
+  private heuristicExtract(query: string): JobSearchParams {
+    const q = query.toLowerCase();
+    const params: JobSearchParams = {};
+
+    // 1. Extract Workplace Type & Work Mode
+    if (q.includes('remote')) {
+      params.workplaceType = 'REMOTE';
+      params.workMode = 'remote';
+    } else if (q.includes('hybrid')) {
+      params.workplaceType = 'HYBRID';
+      params.workMode = 'hybrid';
+    } else if (q.includes('on-site') || q.includes('onsite') || q.includes('office')) {
+      params.workplaceType = 'ON_SITE';
+      params.workMode = 'onsite';
+    }
+
+    // 2. Extract Location (Common Tech Hubs)
+    const cities = ['bangalore', 'bengaluru', 'mumbai', 'pune', 'delhi', 'noida', 'gurgaon', 'gurugram', 'chennai', 'hyderabad', 'kolkata', 'london', 'san francisco', 'seattle', 'new york', 'remote'];
+    for (const city of cities) {
+      if (q.includes(city)) {
+        params.location = city.charAt(0).toUpperCase() + city.slice(1);
+        break;
+      }
+    }
+
+    // 3. Extract Experience Level
+    if (q.includes('senior') || q.includes('sr.')) params.experienceLevel = 'SENIOR_LEVEL';
+    else if (q.includes('lead') || q.includes('staff') || q.includes('principal')) params.experienceLevel = 'DIRECTOR';
+    else if (q.includes('junior') || q.includes('jr.')) params.experienceLevel = 'ENTRY_LEVEL';
+    else if (q.includes('intern')) params.experienceLevel = 'INTERNSHIP';
+    else if (q.includes('fresher')) params.experienceLevel = 'ENTRY_LEVEL';
+
+    // 4. Extract Employment Type
+    if (q.includes('contract')) params.employmentType = 'CONTRACT';
+    else if (q.includes('part-time') || q.includes('part time')) params.employmentType = 'PART_TIME';
+    else if (q.includes('full-time') || q.includes('full time')) params.employmentType = 'FULL_TIME';
+
+    // 5. Extract Salary (matches 10L, 15LPA, 20000, etc.)
+    const salaryMatch = q.match(/(\d+)\s*(lpa|l|k|lac|lakh|thousand)/i);
+    if (salaryMatch) {
+      let val = parseInt(salaryMatch[1]);
+      // Heuristic normalization: if k, assume it's yearly and normalize to lakhs for comparison if needed
+      // If just a small number like 10, assume LPA.
+      params.salaryMin = val;
+    }
+
+    // 6. Extract Date (postedAfter)
+    let daysAgo = 30; // Default
+    if (q.includes('today')) daysAgo = 1;
+    else if (q.includes('yesterday')) daysAgo = 2;
+    else if (q.includes('last week')) daysAgo = 7;
+    else if (q.includes('last month')) daysAgo = 30;
+    else {
+      const relativeMatch = q.match(/(\d+)\s*(day|week|month)s?\s*ago/);
+      if (relativeMatch) {
+        const num = parseInt(relativeMatch[1]);
+        const unit = relativeMatch[2];
+        if (unit === 'day') daysAgo = num;
+        else if (unit === 'week') daysAgo = num * 7;
+        else if (unit === 'month') daysAgo = num * 30;
+      }
+    }
+    params.postedAfter = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+
+    // 7. Extract Title (Cleanup common words)
+    let title = query
+      .replace(/find|search|for|jobs|roles|hiring|opportunities|in|at|last|week|month|ago|today|yesterday/gi, "")
+      .replace(new RegExp(params.location || "", "gi"), "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    params.title = title || undefined;
+
+    return params;
+  }
+
   async extractJobSearchParams(query: string): Promise<JobSearchParams> {
     const JobSearchParamsSchema = z.object({
       title: z.string().optional().describe("Core job keywords (e.g., 'Android'). No fluff."),
@@ -89,19 +165,29 @@ export class AIService {
       { role: 'user', content: query }
     ];
 
+    // Create a timeout promise (15 seconds)
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error('AI Timeout')), 15000)
+    );
+
     try {
-      const extracted = await this.callAI(messages, zodToJsonSchema(JobSearchParamsSchema as any));
+      const extracted = await Promise.race([
+        this.callAI(messages, zodToJsonSchema(JobSearchParamsSchema as any)),
+        timeoutPromise
+      ]) as any;
+
+      if (!extracted) throw new Error('No data extracted');
 
       // Robust mapping
       const params: JobSearchParams = {
         ...extracted,
-        title: (extracted.title || (extracted as any).role || "").replace(/roles|jobs|hiring|developers|engineer/gi, "").trim() || undefined
+        title: (extracted.title || extracted.role || "").replace(/roles|jobs|hiring|developers|engineer/gi, "").trim() || undefined
       };
 
       return params;
     } catch (e) {
-      console.error('extractJobSearchParams Error:', e);
-      return {};
+      console.warn('AI Extraction failed or timed out. Falling back to heuristics...', e instanceof Error ? e.message : '');
+      return this.heuristicExtract(query);
     }
   }
 
