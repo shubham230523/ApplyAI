@@ -1,3 +1,13 @@
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err?.message || err);
+  if (err?.stack) console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  console.error('UNHANDLED REJECTION:', reason?.message || reason);
+  if (reason?.stack) console.error(reason.stack);
+});
+
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -14,7 +24,18 @@ import { applicationRoutes } from './modules/applications/application.routes.js'
 import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
-  logger: true,
+  logger: {
+    serializers: {
+      err: (err) => {
+        return {
+          type: err.constructor?.name || 'Error',
+          message: err.message,
+          stack: err.stack,
+          ...(err as any)
+        };
+      }
+    }
+  },
 });
 
 fastify.setValidatorCompiler(validatorCompiler);
