@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useRouter, Link } from 'expo-router';
+import { Icon } from '@/components/ui/icon';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -10,6 +12,7 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   async function signUpWithEmail() {
+    if (!email || !password) return;
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -19,132 +22,80 @@ export default function RegisterScreen() {
     if (error) {
       alert(error.message);
     } else {
-      alert('Registration successful! Please check your email or log in.');
+      alert('Verification email sent! Please check your inbox.');
       router.replace('/login');
     }
     setLoading(false);
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Join ApplyAI</Text>
-        <Text style={styles.subtitle}>Find your dream job with AI</Text>
+    <SafeAreaView className="flex-1 bg-[#fafaf9]">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
+          <View className="w-full max-w-md mx-auto bg-white p-10 rounded-[40px] shadow-2xl shadow-slate-200 border border-slate-100">
+            <View className="items-center mb-10">
+              <View className="w-16 h-16 bg-emerald-500 rounded-2xl items-center justify-center shadow-lg shadow-emerald-100 mb-6 rotate-3">
+                <Icon name="person.fill" size={32} color="white" />
+              </View>
+              <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Join ApplyAI</Text>
+              <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px] mt-2">Start your journey</Text>
+            </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="email@address.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-          />
-        </View>
+            <View className="space-y-5">
+              <View>
+                <Text className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-2 ml-1">Email Address</Text>
+                <TextInput
+                  className="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-slate-900 font-semibold"
+                  placeholder="name@company.com"
+                  placeholderTextColor="#cbd5e1"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="At least 6 characters"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
-        </View>
+              <View className="mt-4">
+                <Text className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-2 ml-1">Password</Text>
+                <TextInput
+                  className="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-slate-900 font-semibold"
+                  placeholder="Create a password"
+                  placeholderTextColor="#cbd5e1"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
 
-        <TouchableOpacity
-          style={styles.button}
-          disabled={loading}
-          onPress={signUpWithEmail}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.buttonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
+              <TouchableOpacity
+                className="bg-slate-900 py-5 rounded-2xl items-center justify-center shadow-lg shadow-slate-200 mt-6 active:scale-[0.98]"
+                disabled={loading}
+                onPress={signUpWithEmail}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white font-extrabold text-sm uppercase tracking-widest">Create Account</Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-        <Link href="/login" asChild>
-          <TouchableOpacity style={styles.linkButton}>
-            <Text style={styles.linkText}>Already have an account? Sign In</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
-    </View>
+            <View className="mt-10 items-center border-t border-slate-50 pt-10">
+              <Link href="/login" asChild>
+                <TouchableOpacity>
+                  <Text className="text-slate-400 text-xs font-semibold">
+                    Already have an account? <Text className="text-indigo-600 font-bold">Sign In</Text>
+                  </Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'white',
-    padding: 32,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#111827',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 32,
-    marginTop: 8,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  input: {
-    width: '100%',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-  },
-  button: {
-    backgroundColor: '#2563eb',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  linkButton: {
-    marginTop: 20,
-    padding: 10,
-  },
-  linkText: {
-    color: '#2563eb',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-});

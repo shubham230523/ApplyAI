@@ -1,5 +1,3 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { JobSearchParams, CandidateProfile, OrchestratorResponse, Job } from '@applyai/shared-types';
 import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../../lib/supabase.js';
@@ -7,12 +5,50 @@ import { supabase } from '../../lib/supabase.js';
 // API Keys
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6K_UYww88fbrGXaZv3NGRjM0ep45uVzGRcH7djqRCqKDw';
 
-const CandidateProfileSchema = z.object({
-  name: z.string(),
-  email: z.string(),
-});
+// Schemas defined outside the class to avoid initialization/TS-Node issues
+const JobSearchParamsSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    location: { type: "string" },
+    skills: { type: "array", items: { type: "string" } },
+    experienceLevel: { type: "string", enum: ['ENTRY_LEVEL', 'MID_LEVEL', 'SENIOR_LEVEL', 'DIRECTOR', 'EXECUTIVE', 'INTERNSHIP'] },
+    employmentType: { type: "string", enum: ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP', 'OTHER'] },
+    workplaceType: { type: "string", enum: ['ON_SITE', 'HYBRID', 'REMOTE'] },
+    salaryMin: { type: "number" },
+    postedAfter: { type: "string" },
+  }
+};
 
-const profileJsonSchema = zodToJsonSchema(CandidateProfileSchema as any, 'candidateProfile');
+const ResumeSchema = {
+  type: "object",
+  properties: {
+    name: { type: "string" },
+    email: { type: "string" },
+    phone: { type: "string" },
+    headline: { type: "string" },
+    yearsExperience: { type: "number" },
+    skills: { type: "array", items: { type: "string" } },
+    education: { type: "array", items: { type: "string" } },
+    workExperience: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          company: { type: "string" },
+          role: { type: "string" },
+          startDate: { type: "string", description: "YYYY-MM" },
+          endDate: { type: "string", description: "YYYY-MM or 'Present'" },
+          isCurrent: { type: "boolean" },
+          location: { type: "string" },
+          description: { type: "string" }
+        },
+        required: ["company", "role", "startDate", "description"]
+      }
+    }
+  },
+  required: ["name", "email", "skills", "workExperience"]
+};
 
 export class AIService {
   private _client: any = null;
@@ -36,9 +72,9 @@ export class AIService {
       : prompt;
 
     try {
-      // Using gemini-3.6-flash as requested by user
+      // Using gemini-1.5-flash as it is more stable than experimental versions
       const result = await this.client.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-1.5-flash',
         contents: finalPrompt
       });
 
@@ -100,13 +136,10 @@ export class AIService {
     else if (q.includes('part-time') || q.includes('part time')) params.employmentType = 'PART_TIME';
     else if (q.includes('full-time') || q.includes('full time')) params.employmentType = 'FULL_TIME';
 
-    // 5. Extract Salary (matches 10L, 15LPA, 20000, etc.)
+    // 5. Extract Salary
     const salaryMatch = q.match(/(\d+)\s*(lpa|l|k|lac|lakh|thousand)/i);
     if (salaryMatch) {
-      let val = parseInt(salaryMatch[1]);
-      // Heuristic normalization: if k, assume it's yearly and normalize to lakhs for comparison if needed
-      // If just a small number like 10, assume LPA.
-      params.salaryMin = val;
+      params.salaryMin = parseInt(salaryMatch[1]);
     }
 
     // 6. Extract Date (postedAfter)
@@ -140,17 +173,6 @@ export class AIService {
   }
 
   async extractJobSearchParams(query: string): Promise<JobSearchParams> {
-    const JobSearchParamsSchema = z.object({
-      title: z.string().optional().describe("Core job keywords (e.g., 'Android'). No fluff."),
-      location: z.string().optional().describe("City or country."),
-      skills: z.array(z.string()).optional(),
-      experienceLevel: z.enum(['ENTRY_LEVEL', 'MID_LEVEL', 'SENIOR_LEVEL', 'DIRECTOR', 'EXECUTIVE', 'INTERNSHIP']).optional(),
-      employmentType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY', 'INTERNSHIP', 'OTHER']).optional(),
-      workplaceType: z.enum(['ON_SITE', 'HYBRID', 'REMOTE']).optional(),
-      salaryMin: z.number().optional(),
-      postedAfter: z.string().optional().describe('Full ISO 8601 timestamp string.'),
-    });
-
     const messages = [
       {
         role: 'system',
@@ -172,7 +194,7 @@ export class AIService {
 
     try {
       const extracted = await Promise.race([
-        this.callAI(messages, zodToJsonSchema(JobSearchParamsSchema as any)),
+        this.callAI(messages, JobSearchParamsSchema),
         timeoutPromise
       ]) as any;
 
@@ -194,8 +216,6 @@ export class AIService {
   async getAggregatedOrchestratorResponse(query: string, history: any[] = []): Promise<OrchestratorResponse> {
     const params = await this.extractJobSearchParams(query);
     let jobs: Job[] = [];
-
-    console.log("DEBUG: Final Query Params ->", JSON.stringify(params, null, 2));
 
     try {
       let q = supabase.from('jobs').select('*').eq('is_active', true);
@@ -303,9 +323,37 @@ export class AIService {
   }
 
   async parseResumeText(text: string): Promise<CandidateProfile> {
-    const messages = [{ role: 'system', content: 'Extract details.' }, { role: 'user', content: text }];
-    const definition = (profileJsonSchema as any).definitions?.candidateProfile;
-    return await this.callAI(messages, definition);
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert resume parser. Extract structured data from the provided resume text.
+        Instructions:
+        - Extract all work experiences precisely.
+        - Normalize dates to YYYY-MM.
+        - If end date is missing and it's the first experience, mark isCurrent as true.
+        - Summarize long descriptions into clear, impact-oriented bullet points.`
+      },
+      { role: 'user', content: text }
+    ];
+
+    try {
+      return await this.callAI(messages, ResumeSchema);
+    } catch (e) {
+      console.error('AI Resume Parse Failed:', e);
+      // Return a basic structure so the UI doesn't break
+      return {
+        name: text.split('\n')[0]?.substring(0, 50) || 'Unknown',
+        email: text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || '',
+        yearsExperience: 0,
+        skills: [],
+        workExperience: [],
+        education: [],
+        certifications: [],
+        projects: [],
+        achievements: [],
+        preferredLocations: []
+      };
+    }
   }
 
   async calculateMatchScore(jd: string, profile: CandidateProfile): Promise<{ score: number; feedback: string }> {

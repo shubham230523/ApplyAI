@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
 import { ResumeService } from './resume.service.js';
-import { z } from 'zod';
+import { authenticate } from '../../common/auth.middleware.js';
 
 const resumeService = new ResumeService();
 
@@ -13,7 +13,7 @@ export async function resumeRoutes(fastify: FastifyInstance) {
     },
   });
 
-  fastify.post('/upload', async (request, reply) => {
+  fastify.post('/upload', { preHandler: [authenticate] }, async (request, reply) => {
     const data = await request.file();
     if (!data) {
       return reply.status(400).send({ error: 'No file uploaded' });
@@ -23,26 +23,27 @@ export async function resumeRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'Only PDF files are allowed' });
     }
 
-    // In a real app, userId would come from JWT (request.user.id)
-    const userId = (request as any).user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = request.user.sub;
 
     try {
       const buffer = await data.toBuffer();
-      const profile = await resumeService.parseResume(buffer, userId, data.filename);
-      return { message: 'Resume uploaded and parsed successfully', profile };
-    } catch (error) {
-      console.error('Upload error:', error);
-      return reply.status(500).send({ error: 'Failed to parse resume' });
+      const extractedData = await resumeService.uploadAndParse(buffer, userId, data.filename);
+      return {
+        message: 'Resume processed successfully',
+        extractedData
+      };
+    } catch (error: any) {
+      console.error('Resume processing error:', error);
+      return reply.status(500).send({ error: error.message || 'Failed to process resume' });
     }
   });
 
-  fastify.post('/match', {
-    schema: {
-      body: z.object({
-        jobId: z.string(),
-      }),
+  fastify.post('/match', async (request, reply) => {
+    // Basic body check without Zod to avoid prototype issues
+    const body = request.body as any;
+    if (!body?.jobId) {
+      return reply.status(400).send({ error: 'jobId is required' });
     }
-  }, async (request, reply) => {
     return { score: 85, feedback: 'Strong match based on profile analysis.' };
   });
 }

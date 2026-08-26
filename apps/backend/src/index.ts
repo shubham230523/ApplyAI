@@ -1,13 +1,3 @@
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err?.message || err);
-  if (err?.stack) console.error(err.stack);
-});
-
-process.on('unhandledRejection', (reason: any) => {
-  console.error('UNHANDLED REJECTION:', reason?.message || reason);
-  if (reason?.stack) console.error(reason.stack);
-});
-
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -16,7 +6,6 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import { serializerCompiler, validatorCompiler, jsonSchemaTransform } from 'fastify-type-provider-zod';
 import { profileRoutes } from './modules/profiles/profile.routes.js';
 import { orchestratorRoutes } from './modules/orchestrator/orchestrator.routes.js';
 import { resumeRoutes } from './modules/resumes/resume.routes.js';
@@ -24,22 +13,8 @@ import { applicationRoutes } from './modules/applications/application.routes.js'
 import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
-  logger: {
-    serializers: {
-      err: (err) => {
-        return {
-          type: err.constructor?.name || 'Error',
-          message: err.message,
-          stack: err.stack,
-          ...(err as any)
-        };
-      }
-    }
-  },
+  logger: true,
 });
-
-fastify.setValidatorCompiler(validatorCompiler);
-fastify.setSerializerCompiler(serializerCompiler);
 
 fastify.register(cors, { origin: '*' });
 
@@ -49,7 +24,6 @@ if (process.env.SUPABASE_JWT_SECRET) {
 
 fastify.register(swagger, {
   openapi: { info: { title: 'ApplyAI API', version: '1.0.0' } },
-  transform: jsonSchemaTransform,
 });
 
 fastify.register(swaggerUi, { routePrefix: '/docs' });

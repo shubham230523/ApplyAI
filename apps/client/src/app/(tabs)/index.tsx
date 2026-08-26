@@ -12,9 +12,9 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
-import { SymbolView } from 'expo-symbols';
 import { JobCard } from '@/components/job-card';
 import { JobFeed } from '@/components/job-feed';
+import { ResumeUploadModal } from '@/components/resume-upload-modal';
 import { Job, OrchestratorResponse } from '@applyai/shared-types';
 import { Image } from 'expo-image';
 
@@ -48,6 +48,25 @@ export default function AssistantScreen() {
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [applying, setApplying] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [isProfileMissing, setIsProfileMissing] = useState(false);
+
+  useEffect(() => {
+    // Check if profile exists
+    const checkProfile = async () => {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      try {
+        const response = await fetch(`${apiUrl}/api/profile`);
+        if (response.status === 404 || (await response.json()) === null) {
+           setIsProfileMissing(true);
+           setShowUpload(true);
+        }
+      } catch (e) {
+        // Silent fail or handle error
+      }
+    };
+    checkProfile();
+  }, []);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const typingOpac = useRef(new Animated.Value(0.3)).current;
@@ -296,6 +315,7 @@ export default function AssistantScreen() {
           </View>
         )}
       </View>
+      <ResumeUploadModal visible={showUpload} onClose={() => setShowUpload(false)} />
     </View>
   );
 }

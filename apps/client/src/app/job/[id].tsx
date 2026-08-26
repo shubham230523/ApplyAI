@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import { Icon } from '@/components/ui/icon';
 import { Job } from '@applyai/shared-types';
 import { Image } from 'expo-image';
+import { ResumeUploadModal } from '@/components/resume-upload-modal';
 
 export default function JobDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showForceUpload, setShowForceUpload] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -52,9 +54,26 @@ export default function JobDetailsScreen() {
     return 'Not Specified';
   };
 
-  const handleApply = () => {
-    if (job?.applicationUrl) {
-      Linking.openURL(job.applicationUrl);
+  const handleApply = async () => {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
+    try {
+      // 1. Check if profile exists before applying
+      const response = await fetch(`${apiUrl}/api/profile`);
+      const profile = await response.json();
+
+      if (!profile) {
+        setShowForceUpload(true);
+        return;
+      }
+
+      // 2. If profile exists, proceed to application URL
+      if (job?.applicationUrl) {
+        Linking.openURL(job.applicationUrl);
+      }
+    } catch (e) {
+      // If profile check fails, better safe than sorry: show upload
+      setShowForceUpload(true);
     }
   };
 
@@ -91,7 +110,7 @@ export default function JobDetailsScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-xl bg-slate-50 items-center justify-center border border-slate-200/60"
         >
-          <SymbolView name="chevron.left" size={16} tintColor="#1e293b" />
+          <Icon name="chevron.left" size={16} color="#1e293b" />
         </TouchableOpacity>
 
         <View className="items-center flex-1 mx-4">
@@ -100,7 +119,7 @@ export default function JobDetailsScreen() {
         </View>
 
         <TouchableOpacity className="w-10 h-10 rounded-xl bg-slate-50 items-center justify-center border border-slate-200/60">
-          <SymbolView name="square.and.arrow.up" size={16} tintColor="#1e293b" />
+          <Icon name="square.and.arrow.up" size={16} color="#1e293b" />
         </TouchableOpacity>
       </View>
 
@@ -131,7 +150,7 @@ export default function JobDetailsScreen() {
                 </View>
               </View>
               <View className="flex-row items-center mt-1">
-                <SymbolView name="mappin.and.ellipse" size={11} tintColor="#64748b" />
+                <Icon name="mappin.and.ellipse" size={11} color="#64748b" />
                 <Text className="text-slate-500 font-semibold text-[12px] ml-1.5">
                   {job.location} • {(job.workMode || 'remote').toUpperCase()}
                 </Text>
@@ -166,7 +185,7 @@ export default function JobDetailsScreen() {
           <View className="mt-4 border-t border-slate-200/60 pt-10 mb-10">
             <View className="flex-row items-center mb-6">
               <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
-                <SymbolView name="briefcase.fill" size={16} tintColor="#6366f1" />
+                <Icon name="briefcase.fill" size={16} color="#6366f1" />
               </View>
               <Text className="text-lg font-bold text-slate-900">The Opportunity</Text>
             </View>
@@ -177,7 +196,7 @@ export default function JobDetailsScreen() {
           <View className="mb-10">
             <View className="flex-row items-center mb-6">
               <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
-                <SymbolView name="cpu.fill" size={16} tintColor="#6366f1" />
+                <Icon name="cpu.fill" size={16} color="#6366f1" />
               </View>
               <Text className="text-lg font-bold text-slate-900">Technical Details</Text>
             </View>
@@ -200,7 +219,7 @@ export default function JobDetailsScreen() {
           <View className="mb-12">
             <View className="flex-row items-center mb-6">
               <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
-                <SymbolView name="link" size={16} tintColor="#6366f1" />
+                <Icon name="link" size={16} color="#6366f1" />
               </View>
               <Text className="text-lg font-bold text-slate-900">External Resources</Text>
             </View>
@@ -245,6 +264,11 @@ export default function JobDetailsScreen() {
           </TouchableOpacity>
         </View>
       </View>
+      <ResumeUploadModal
+        visible={showForceUpload}
+        onClose={() => setShowForceUpload(false)}
+        forceMode={true}
+      />
     </View>
   );
 }

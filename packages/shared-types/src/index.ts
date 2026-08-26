@@ -25,6 +25,16 @@ export interface Job {
   updatedAt: Date;
 }
 
+export interface WorkExperience {
+  company: string;
+  role: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent: boolean;
+  location?: string;
+  description: string;
+}
+
 export interface CandidateProfile {
   name: string;
   email: string;
@@ -32,7 +42,7 @@ export interface CandidateProfile {
   headline?: string;
   yearsExperience: number;
   skills: string[];
-  companies: string[];
+  workExperience: WorkExperience[];
   education: string[];
   certifications: string[];
   projects: string[];
@@ -53,6 +63,17 @@ export interface JobSearchParams {
   salaryMin?: number;
   workMode?: 'remote' | 'hybrid' | 'onsite';
   postedAfter?: string; // ISO Date String
+}
+
+export interface JobForm {
+  name: string;
+  email: string;
+  phone: string;
+  yearsExperience: number;
+  skills: string[];
+  education: string[];
+  location: string;
+  expectedSalary?: number;
 }
 
 export interface OrchestratorResponse {

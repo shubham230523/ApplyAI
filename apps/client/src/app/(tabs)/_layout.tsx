@@ -1,18 +1,18 @@
 import React from 'react';
 import { Tabs, Slot, Link, usePathname } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { View, Text, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { Icon } from '@/components/ui/icon';
 
-function SidebarItem({ name, icon, label, active }: { name: string, icon: string, label: string, active: boolean }) {
+function SidebarItem({ name, icon, label, active }: { name: string, icon: any, label: string, active: boolean }) {
   return (
     <Link href={name === 'index' ? '/' : `/${name}`} asChild>
       <TouchableOpacity
         className={`flex-row items-center px-3 py-2 rounded-xl mb-1.5 ${active ? 'bg-slate-900 shadow-lg shadow-slate-200' : 'hover:bg-slate-50'}`}
       >
-        <SymbolView
+        <Icon
           name={icon}
           size={16}
-          tintColor={active ? '#ffffff' : '#64748b'}
+          color={active ? '#ffffff' : '#64748b'}
         />
         <Text
           className={`ml-2.5 text-sm font-bold tracking-tight ${active ? 'text-white' : 'text-slate-600'}`}
@@ -66,7 +66,7 @@ export default function TabsLayout() {
 
           <View className="pt-6 border-t border-slate-50">
             <TouchableOpacity className="flex-row items-center px-3 py-2 rounded-lg bg-slate-900 shadow-lg active:scale-95 transition-all">
-              <SymbolView name="plus.circle.fill" size={13} tintColor="white" />
+              <Icon name="plus.circle.fill" size={13} color="white" />
               <Text className="ml-2 text-white font-bold text-[9px] uppercase tracking-widest">Update AI CV</Text>
             </TouchableOpacity>
           </View>
@@ -100,21 +100,21 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Assistant',
-          tabBarIcon: ({ color }) => <SymbolView name="sparkles" size={24} tintColor={color} />,
+          tabBarIcon: ({ color }) => <Icon name="sparkles" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="applications"
         options={{
           title: 'Applications',
-          tabBarIcon: ({ color }) => <SymbolView name="briefcase.fill" size={24} tintColor={color} />,
+          tabBarIcon: ({ color }) => <Icon name="briefcase.fill" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <SymbolView name="person.fill" size={24} tintColor={color} />,
+          tabBarIcon: ({ color }) => <Icon name="person.fill" size={24} color={color} />,
         }}
       />
     </Tabs>

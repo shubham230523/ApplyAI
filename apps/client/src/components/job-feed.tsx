@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { Job } from '@applyai/shared-types';
 import { JobCard } from './job-card';
-import { SymbolView } from 'expo-symbols';
+import { Icon } from '@/components/ui/icon';
 
 interface JobFeedProps {
   jobs: Job[];
@@ -56,7 +56,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
         ) : (
           <View className="flex-1 justify-center items-center py-32 bg-white/40 rounded-[48px] border border-dashed border-slate-200">
             <View className="bg-slate-100 p-8 rounded-full mb-8 shadow-inner">
-              <SymbolView name="sparkles" size={56} tintColor="#cbd5e1" />
+              <Icon name="sparkles" size={56} color="#cbd5e1" />
             </View>
             <Text className="text-slate-900 font-bold text-xl tracking-tighter">Hub Initialized</Text>
             <Text className="text-slate-500 mt-3 text-center max-w-[320px] font-medium text-lg leading-relaxed">

@@ -21,8 +21,6 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
-  // AUTH DISABLED FOR MVP - Directly landing to AI chat
-  /*
   useEffect(() => {
     if (loading) return;
 
@@ -34,7 +32,6 @@ function RootLayoutNav() {
       router.replace('/');
     }
   }, [session, loading, segments]);
-  */
 
   useEffect(() => {
     if (!loading) {

@@ -40,19 +40,19 @@ export async function updateProfile(userId: string, data: ProfileInput) {
   }
 }
 
-export async function getOrCreateUser(email: string) {
+export async function getOrCreateUser(id: string, email: string) {
   if (!db) throw new Error('Database not initialized');
   const [existing] = await db
     .select()
     .from(users)
-    .where(eq(users.email, email))
+    .where(eq(users.id, id))
     .limit(1);
 
   if (existing) return existing;
 
   const [created] = await db
     .insert(users)
-    .values({ email })
+    .values({ id, email })
     .returning();
   return created;
 }

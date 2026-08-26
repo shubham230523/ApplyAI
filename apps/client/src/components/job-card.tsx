@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Job } from '@applyai/shared-types';
-import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { Icon } from './ui/icon';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -59,10 +59,10 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
               }}
               className="mb-3 items-center justify-center"
             >
-              <SymbolView
+              <Icon
                 name={selected ? "checkmark.circle.fill" : "circle"}
                 size={22}
-                tintColor={selected ? "#6366f1" : "#cbd5e1"}
+                color={selected ? "#6366f1" : "#cbd5e1"}
               />
             </TouchableOpacity>
 
@@ -101,11 +101,11 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
             {/* Line 6: Location & Salary */}
             <View className="flex-row flex-wrap items-center mt-2 gap-1.5">
               <View className="flex-row items-center bg-slate-50 px-2 py-0.5 rounded-lg">
-                <SymbolView name="mappin.and.ellipse" size={9} tintColor="#64748b" />
+                <Icon name="mappin.and.ellipse" size={10} color="#64748b" />
                 <Text className="text-[9px] font-semibold text-slate-600 ml-1" numberOfLines={1}>{job.location}</Text>
               </View>
               <View className="flex-row items-center bg-slate-50 px-2 py-0.5 rounded-lg">
-                <SymbolView name="indianrupeesign.circle.fill" size={9} tintColor="#64748b" />
+                <Icon name="indianrupeesign.circle.fill" size={10} color="#64748b" />
                 <Text className="text-[9px] font-semibold text-slate-600 ml-1">
                   {formatSalary(job.salaryMin, job.salaryMax)}
                 </Text>

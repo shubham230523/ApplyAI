@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
-import { SymbolView } from 'expo-symbols';
+import { Icon } from '@/components/ui/icon';
 import { useAuth } from '@/contexts/auth';
 
 export default function ProfileScreen() {
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
         <View className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-6">
           <View className="flex-row items-center mb-6">
             <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
-              <SymbolView name="person.fill" size={32} tintColor="#2563eb" />
+              <Icon name="person.fill" size={32} color="#2563eb" />
             </View>
             <View className="ml-4">
               <Text className="text-xl font-bold text-gray-900">{profile?.name || 'Complete your profile'}</Text>
@@ -84,7 +84,7 @@ export default function ProfileScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <SymbolView name="doc.fill.badge.plus" size={18} tintColor="white" />
+                <Icon name="doc.fill.badge.plus" size={18} color="white" />
                 <Text className="text-white font-bold ml-2">Update AI Profile (PDF)</Text>
               </>
             )}
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
           onPress={signOut}
           className="flex-row items-center justify-center p-5 bg-red-50 rounded-2xl border border-red-100 mb-20"
         >
-          <SymbolView name="rectangle.portrait.and.arrow.right" size={16} tintColor="#ef4444" />
+          <Icon name="rectangle.portrait.and.arrow.right" size={16} color="#ef4444" />
           <Text className="text-red-500 font-bold ml-2">Sign Out Securely</Text>
         </TouchableOpacity>
       </ScrollView>

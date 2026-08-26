@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SymbolView } from 'expo-symbols';
+import { Icon } from '@/components/ui/icon';
 
 interface Application {
   id: string;
@@ -54,10 +54,10 @@ export default function ApplicationsScreen() {
       </View>
 
       <View className="flex-row items-center mt-2">
-        <SymbolView name="mappin.circle" size={12} tintColor="#9ca3af" />
+        <Icon name="mappin.circle" size={12} color="#9ca3af" />
         <Text className="text-xs text-gray-400 ml-1">{item.location}</Text>
         <Text className="text-gray-300 mx-2">•</Text>
-        <SymbolView name="calendar" size={12} tintColor="#9ca3af" />
+        <Icon name="calendar" size={12} color="#9ca3af" />
         <Text className="text-xs text-gray-400 ml-1">
           {new Date(item.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
         </Text>
@@ -89,7 +89,7 @@ export default function ApplicationsScreen() {
             }
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                <SymbolView name="doc.text.magnifyingglass" size={48} tintColor="#d1d5db" />
+                <Icon name="doc.text.magnifyingglass" size={48} color="#d1d5db" />
                 <Text className="text-gray-400 mt-4 font-bold text-lg">No applications yet</Text>
                 <Text className="text-gray-400 mt-1">Start chatting with the assistant to apply</Text>
               </View>

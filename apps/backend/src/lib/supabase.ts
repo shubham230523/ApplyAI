@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-// @ts-ignore
-import WebSocket from 'ws';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const WebSocket = require('ws');
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
