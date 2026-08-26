@@ -14,7 +14,9 @@ import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
   logger: true,
-  ignoreTrailingSlash: true,
+  routerOptions: {
+    ignoreTrailingSlash: true,
+  }
 });
 
 fastify.register(cors, {

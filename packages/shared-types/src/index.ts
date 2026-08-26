@@ -1,28 +1,28 @@
 export interface Job {
   id: string;
-  source: string;
-  sourceJobId: string;
+  externalId?: string;
+  source?: string;
   title: string;
-  company: string;
-  companyLogo?: string;
   description: string;
-  location: string;
-  country: string;
-  city: string;
-  workMode: 'remote' | 'hybrid' | 'onsite';
-  employmentType: string;
-  experienceMin?: number;
-  experienceMax?: number;
-  salaryMin?: number;
-  salaryMax?: number;
+  companyName: string;
+  companyWebsite?: string;
+  companyLogoUrl?: string;
+  location?: string;
+  countryCode?: string;
+  workplaceType?: 'ON_SITE' | 'HYBRID' | 'REMOTE';
+  employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'TEMPORARY' | 'INTERNSHIP' | 'OTHER';
+  experienceLevel?: 'ENTRY_LEVEL' | 'MID_LEVEL' | 'SENIOR_LEVEL' | 'DIRECTOR' | 'EXECUTIVE' | 'INTERNSHIP';
   salaryCurrency?: string;
-  skills: string[];
-  postedAt: Date;
-  applicationUrl: string;
-  applicationMethod: string;
-  sourceUrl: string;
-  createdAt: Date;
-  updatedAt: Date;
+  salaryMin?: number | string;
+  salaryMax?: number | string;
+  salaryPeriod?: 'HOURLY' | 'MONTHLY' | 'YEARLY';
+  applyUrl?: string;
+  contactEmail?: string;
+  isActive?: boolean;
+  postedAt: Date | string;
+  expiresAt?: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface WorkExperience {
@@ -61,7 +61,6 @@ export interface JobSearchParams {
   employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'TEMPORARY' | 'INTERNSHIP' | 'OTHER';
   workplaceType?: 'ON_SITE' | 'HYBRID' | 'REMOTE';
   salaryMin?: number;
-  workMode?: 'remote' | 'hybrid' | 'onsite';
   postedAfter?: string; // ISO Date String
 }
 

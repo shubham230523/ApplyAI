@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
 import { ResumeService } from './resume.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
+import { getOrCreateUser } from '../profiles/profile.service.js';
 
 const resumeService = new ResumeService();
 
@@ -24,8 +25,12 @@ export async function resumeRoutes(fastify: FastifyInstance) {
     }
 
     const userId = request.user.sub;
+    const email = request.user.email;
 
     try {
+      // Ensure user exists in our DB before adding a resume (due to FK constraint)
+      await getOrCreateUser(userId, email);
+
       const buffer = await data.toBuffer();
       const extractedData = await resumeService.uploadAndParse(buffer, userId, data.filename);
       return {

@@ -62,9 +62,6 @@ export class AIService {
     return this._client;
   }
 
-  /**
-   * Universal AI Call using Official Google GenAI SDK (Next Gen)
-   */
   private async callAI(messages: any[], jsonSchema?: any): Promise<any> {
     const prompt = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
     const finalPrompt = jsonSchema
@@ -72,7 +69,6 @@ export class AIService {
       : prompt;
 
     try {
-      // Using gemini-1.5-flash as it is more stable than experimental versions
       const result = await this.client.models.generateContent({
         model: 'gemini-1.5-flash',
         contents: finalPrompt
@@ -82,7 +78,6 @@ export class AIService {
 
       if (jsonSchema) {
         try {
-          // Robust JSON extraction
           const jsonMatch = content.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
           const rawJson = jsonMatch ? jsonMatch[0] : content;
           return JSON.parse(rawJson);
@@ -103,19 +98,14 @@ export class AIService {
     const q = query.toLowerCase();
     const params: JobSearchParams = {};
 
-    // 1. Extract Workplace Type & Work Mode
     if (q.includes('remote')) {
       params.workplaceType = 'REMOTE';
-      params.workMode = 'remote';
     } else if (q.includes('hybrid')) {
       params.workplaceType = 'HYBRID';
-      params.workMode = 'hybrid';
     } else if (q.includes('on-site') || q.includes('onsite') || q.includes('office')) {
       params.workplaceType = 'ON_SITE';
-      params.workMode = 'onsite';
     }
 
-    // 2. Extract Location (Common Tech Hubs)
     const cities = ['bangalore', 'bengaluru', 'mumbai', 'pune', 'delhi', 'noida', 'gurgaon', 'gurugram', 'chennai', 'hyderabad', 'kolkata', 'london', 'san francisco', 'seattle', 'new york', 'remote'];
     for (const city of cities) {
       if (q.includes(city)) {
@@ -124,26 +114,22 @@ export class AIService {
       }
     }
 
-    // 3. Extract Experience Level
     if (q.includes('senior') || q.includes('sr.')) params.experienceLevel = 'SENIOR_LEVEL';
     else if (q.includes('lead') || q.includes('staff') || q.includes('principal')) params.experienceLevel = 'DIRECTOR';
     else if (q.includes('junior') || q.includes('jr.')) params.experienceLevel = 'ENTRY_LEVEL';
     else if (q.includes('intern')) params.experienceLevel = 'INTERNSHIP';
     else if (q.includes('fresher')) params.experienceLevel = 'ENTRY_LEVEL';
 
-    // 4. Extract Employment Type
     if (q.includes('contract')) params.employmentType = 'CONTRACT';
     else if (q.includes('part-time') || q.includes('part time')) params.employmentType = 'PART_TIME';
     else if (q.includes('full-time') || q.includes('full time')) params.employmentType = 'FULL_TIME';
 
-    // 5. Extract Salary
     const salaryMatch = q.match(/(\d+)\s*(lpa|l|k|lac|lakh|thousand)/i);
     if (salaryMatch) {
       params.salaryMin = parseInt(salaryMatch[1]);
     }
 
-    // 6. Extract Date (postedAfter)
-    let daysAgo = 30; // Default
+    let daysAgo = 30;
     if (q.includes('today')) daysAgo = 1;
     else if (q.includes('yesterday')) daysAgo = 2;
     else if (q.includes('last week')) daysAgo = 7;
@@ -160,7 +146,6 @@ export class AIService {
     }
     params.postedAfter = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
 
-    // 7. Extract Title (Cleanup common words)
     let title = query
       .replace(/find|search|for|jobs|roles|hiring|opportunities|in|at|last|week|month|ago|today|yesterday/gi, "")
       .replace(new RegExp(params.location || "", "gi"), "")
@@ -177,17 +162,11 @@ export class AIService {
       {
         role: 'system',
         content: `Extract structured job search parameters.
-        Current Time: ${new Date().toISOString()}.
-
-        Guidelines:
-        - title: Extract core role keywords (e.g., "Android" from "Android roles").
-        - postedAfter: If user mentions time (e.g., "last week"), calculate the ISO 8601 timestamp (YYYY-MM-DDTHH:mm:ssZ) based on Current Time.
-        - If no time is specified, default to 30 days ago.`
+        Current Time: ${new Date().toISOString()}.`
       },
       { role: 'user', content: query }
     ];
 
-    // Create a timeout promise (15 seconds)
     const timeoutPromise = new Promise<null>((_, reject) =>
       setTimeout(() => reject(new Error('AI Timeout')), 15000)
     );
@@ -200,7 +179,6 @@ export class AIService {
 
       if (!extracted) throw new Error('No data extracted');
 
-      // Robust mapping
       const params: JobSearchParams = {
         ...extracted,
         title: (extracted.title || extracted.role || "").replace(/roles|jobs|hiring|developers|engineer/gi, "").trim() || undefined
@@ -208,7 +186,6 @@ export class AIService {
 
       return params;
     } catch (e) {
-      console.warn('AI Extraction failed or timed out. Falling back to heuristics...', e instanceof Error ? e.message : '');
       return this.heuristicExtract(query);
     }
   }
@@ -224,7 +201,6 @@ export class AIService {
         const words = params.title.split(' ').filter(w => w.length > 1);
         if (words.length > 0) {
           const searchPattern = `%${words.join('%')}%`;
-          // Fuzzy search in both title and description
           q = q.or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`);
         }
       }
@@ -255,35 +231,32 @@ export class AIService {
 
       const { data, error } = await q.order('posted_at', { ascending: false }).limit(20);
 
-      if (error) {
-        console.error('Supabase fetch error:', error);
-      }
-
       if (!error && data) {
         jobs = data.map((j: any) => ({
           id: j.id,
+          externalId: j.external_id,
           source: j.source || 'Direct',
-          sourceJobId: j.external_id || j.id,
           title: j.title,
-          company: j.company_name,
-          companyLogo: j.company_logo_url,
           description: j.description,
+          companyName: j.company_name,
+          companyWebsite: j.company_website,
+          companyLogoUrl: j.company_logo_url,
           location: j.location,
-          country: j.country_code || 'IN',
-          city: j.location?.split(',')[0].trim() || 'Unknown',
-          workMode: (j.workplace_type === 'ON_SITE' ? 'onsite' : j.workplace_type?.toLowerCase() || 'onsite') as any,
+          countryCode: j.country_code || 'IN',
+          workplaceType: j.workplace_type,
           employmentType: j.employment_type || 'FULL_TIME',
-          experienceMin: 0,
+          experienceLevel: j.experience_level,
+          salaryCurrency: j.salary_currency,
           salaryMin: j.salary_min,
           salaryMax: j.salary_max,
-          salaryCurrency: j.salary_currency,
-          postedAt: new Date(j.posted_at),
-          applicationUrl: j.apply_url || '',
-          applicationMethod: 'url',
-          sourceUrl: j.company_website || '',
-          createdAt: new Date(j.created_at),
-          updatedAt: new Date(j.updated_at),
-          skills: []
+          salaryPeriod: j.salary_period,
+          applyUrl: j.apply_url || '',
+          contactEmail: j.contact_email,
+          isActive: j.is_active,
+          postedAt: j.posted_at,
+          expiresAt: j.expires_at,
+          createdAt: j.created_at,
+          updatedAt: j.updated_at,
         }));
       }
     } catch (err) {
@@ -326,12 +299,7 @@ export class AIService {
     const messages = [
       {
         role: 'system',
-        content: `You are an expert resume parser. Extract structured data from the provided resume text.
-        Instructions:
-        - Extract all work experiences precisely.
-        - Normalize dates to YYYY-MM.
-        - If end date is missing and it's the first experience, mark isCurrent as true.
-        - Summarize long descriptions into clear, impact-oriented bullet points.`
+        content: `You are an expert resume parser. Extract structured data from the provided resume text.`
       },
       { role: 'user', content: text }
     ];
@@ -339,8 +307,6 @@ export class AIService {
     try {
       return await this.callAI(messages, ResumeSchema);
     } catch (e) {
-      console.error('AI Resume Parse Failed:', e);
-      // Return a basic structure so the UI doesn't break
       return {
         name: text.split('\n')[0]?.substring(0, 50) || 'Unknown',
         email: text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || '',

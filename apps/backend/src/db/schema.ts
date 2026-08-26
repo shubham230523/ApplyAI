@@ -1,10 +1,10 @@
-import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, primaryKey, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, numeric, varchar } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const profiles = pgTable('profiles', {
@@ -18,8 +18,8 @@ export const profiles = pgTable('profiles', {
   preferredLocations: text('preferred_locations').array(),
   preferredSalary: integer('preferred_salary'),
   noticePeriod: text('notice_period'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const resumes = pgTable('resumes', {
@@ -30,46 +30,46 @@ export const resumes = pgTable('resumes', {
   contentType: text('content_type').notNull(),
   parsedContent: jsonb('parsed_content'),
   isMain: boolean('is_main').default(false),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const jobs = pgTable('jobs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  source: text('source').notNull(),
-  sourceJobId: text('source_job_id').notNull(),
+  externalId: text('external_id').unique(),
+  source: text('source'),
   title: text('title').notNull(),
-  company: text('company').notNull(),
-  companyLogo: text('company_logo'),
   description: text('description').notNull(),
-  location: text('location').notNull(),
-  workMode: text('work_mode').notNull(), // remote, hybrid, onsite
-  employmentType: text('employment_type').notNull(),
-  experienceMin: integer('experience_min'),
-  experienceMax: integer('experience_max'),
-  salaryMin: integer('salary_min'),
-  salaryMax: integer('salary_max'),
-  salaryCurrency: text('salary_currency').default('INR'),
-  skills: text('skills').array(),
-  postedAt: timestamp('posted_at').notNull(),
-  applicationUrl: text('application_url').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => {
-  return {
-    sourceJobIdx: uniqueIndex('source_job_idx').on(table.source, table.sourceJobId),
-  };
+  companyName: text('company_name').notNull(),
+  companyWebsite: text('company_website'),
+  companyLogoUrl: text('company_logo_url'),
+  location: text('location'),
+  countryCode: varchar('country_code', { length: 10 }),
+  workplaceType: text('workplace_type'), // 'ON_SITE', 'HYBRID', 'REMOTE'
+  employmentType: text('employment_type'), // 'FULL_TIME', 'PART_TIME', etc.
+  experienceLevel: text('experience_level'), // 'ENTRY_LEVEL', 'MID_LEVEL', etc.
+  salaryCurrency: varchar('salary_currency', { length: 5 }),
+  salaryMin: numeric('salary_min', { precision: 12, scale: 2 }),
+  salaryMax: numeric('salary_max', { precision: 12, scale: 2 }),
+  salaryPeriod: text('salary_period'), // 'HOURLY', 'MONTHLY', 'YEARLY'
+  applyUrl: text('apply_url'),
+  contactEmail: text('contact_email'),
+  isActive: boolean('is_active').default(true),
+  postedAt: timestamp('posted_at', { withTimezone: true }).defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const applications = pgTable('applications', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   jobId: uuid('job_id').references(() => jobs.id).notNull(),
-  status: text('status').notNull().default('applied'), // prepared, applied, interview, rejected, offer
-  appliedAt: timestamp('applied_at').defaultNow().notNull(),
+  status: text('status').notNull().default('applied'),
+  appliedAt: timestamp('applied_at', { withTimezone: true }).defaultNow().notNull(),
   resumeId: uuid('resume_id').references(() => resumes.id),
   aiCoverLetter: text('ai_cover_letter'),
   aiAnswers: jsonb('ai_answers'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

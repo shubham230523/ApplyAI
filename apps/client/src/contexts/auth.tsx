@@ -17,6 +17,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // For testing: bypass auth and set a mock session
+    setSession({
+      access_token: 'test-token',
+      refresh_token: 'test-refresh-token',
+      expires_in: 3600,
+      token_type: 'bearer',
+      user: {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as any,
+    });
+    setUser({
+      id: 'test-user-id',
+      email: 'test@example.com',
+    } as any);
+    setLoading(false);
+
+    /*
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -30,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
+    */
   }, []);
 
   const signOut = async () => {

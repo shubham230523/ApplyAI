@@ -54,7 +54,7 @@ export class ApplicationService {
       status: applications.status,
       appliedAt: applications.appliedAt,
       jobTitle: jobs.title,
-      company: jobs.company,
+      companyName: jobs.companyName,
       location: jobs.location,
     })
     .from(applications)

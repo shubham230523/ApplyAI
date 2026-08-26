@@ -32,12 +32,13 @@ export default function JobDetailsScreen() {
     if (id) fetchJob();
   }, [id]);
 
-  const formatSalary = (min: number | undefined, max: number | undefined) => {
+  const formatSalary = (min: number | string | undefined, max: number | string | undefined) => {
     if (!min && !max) return 'Not Disclosed';
-    const convert = (val: number) => {
-      if (val > 100000) return (val / 100000).toFixed(1);
-      if (val > 1000) return (val / 1000).toFixed(1);
-      return val;
+    const convert = (val: number | string) => {
+      const numericVal = typeof val === 'string' ? parseFloat(val) : val;
+      if (numericVal > 100000) return (numericVal / 100000).toFixed(1);
+      if (numericVal > 1000) return (numericVal / 1000).toFixed(1);
+      return numericVal;
     };
     const minLPA = min ? convert(min) : '';
     const maxLPA = max ? convert(max) : '';
@@ -74,9 +75,9 @@ export default function JobDetailsScreen() {
       }
 
       // 2. If profile exists and is complete, proceed to application URL
-      if (job?.applicationUrl) {
-        console.log('Direct apply to:', job.applicationUrl);
-        Linking.openURL(job.applicationUrl);
+      if (job?.applyUrl) {
+        console.log('Direct apply to:', job.applyUrl);
+        Linking.openURL(job.applyUrl);
       } else {
         alert('Application URL not found for this job.');
       }
@@ -125,7 +126,7 @@ export default function JobDetailsScreen() {
 
         <View className="items-center flex-1 mx-4">
           <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Role Analysis</Text>
-          <Text className="text-base font-bold text-slate-900" numberOfLines={1}>{job.company}</Text>
+          <Text className="text-base font-bold text-slate-900" numberOfLines={1}>{job.companyName}</Text>
         </View>
 
         <TouchableOpacity className="w-10 h-10 rounded-xl bg-slate-50 items-center justify-center border border-slate-200/60">
@@ -146,15 +147,15 @@ export default function JobDetailsScreen() {
           <View className="flex-row items-center mb-8">
             <View className="w-12 h-12 bg-white rounded-2xl items-center justify-center shadow-sm border border-slate-200/60 overflow-hidden">
               <Image
-                source={{ uri: job.companyLogo }}
+                source={{ uri: job.companyLogoUrl }}
                 style={{ width: '100%', height: '100%' }}
                 contentFit="contain"
-                placeholder={{ uri: `https://api.dicebear.com/7.x/initials/svg?seed=${job.company}` }}
+                placeholder={{ uri: `https://api.dicebear.com/7.x/initials/svg?seed=${job.companyName}` }}
               />
             </View>
             <View className="ml-4 flex-1">
               <View className="flex-row items-center justify-between">
-                <Text className="text-lg font-bold text-slate-900">{job.company}</Text>
+                <Text className="text-lg font-bold text-slate-900">{job.companyName}</Text>
                 <View className="bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
                   <Text className="text-emerald-700 text-[10px] font-black uppercase">via {job.source}</Text>
                 </View>
@@ -162,7 +163,7 @@ export default function JobDetailsScreen() {
               <View className="flex-row items-center mt-1">
                 <Icon name="mappin.and.ellipse" size={11} color="#64748b" />
                 <Text className="text-slate-500 font-semibold text-[12px] ml-1.5">
-                  {job.location} • {(job.workMode || 'remote').toUpperCase()}
+                  {job.location} • {(job.workplaceType || 'REMOTE').toUpperCase()}
                 </Text>
               </View>
             </View>
@@ -176,14 +177,14 @@ export default function JobDetailsScreen() {
             </View>
             <View className="flex-1 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm">
               <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Target Experience</Text>
-              <Text className="text-xl font-bold text-slate-900">{formatExperience((job as any).experienceLevel)}</Text>
+              <Text className="text-xl font-bold text-slate-900">{formatExperience(job.experienceLevel)}</Text>
             </View>
           </View>
 
           <View className="flex-row gap-4 mb-10">
             <View className="flex-1 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm">
               <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Employment</Text>
-              <Text className="text-base font-bold text-slate-900">{(job as any).employmentType?.replace('_', ' ') || 'FULL TIME'}</Text>
+              <Text className="text-base font-bold text-slate-900">{job.employmentType?.replace('_', ' ') || 'FULL TIME'}</Text>
             </View>
             <View className="flex-1 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm">
               <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Posted At</Text>
@@ -212,8 +213,8 @@ export default function JobDetailsScreen() {
             </View>
             <View className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm">
               {[
-                { label: 'Workplace', value: (job as any).workplaceType || 'Remote' },
-                { label: 'Salary Period', value: (job as any).salaryPeriod || 'YEARLY' },
+                { label: 'Workplace', value: job.workplaceType || 'REMOTE' },
+                { label: 'Salary Period', value: job.salaryPeriod || 'YEARLY' },
                 { label: 'Currency', value: job.salaryCurrency || 'INR' },
                 { label: 'Location', value: job.location },
               ].map((item, index) => (
@@ -235,16 +236,16 @@ export default function JobDetailsScreen() {
             </View>
             <View className="flex-row gap-4">
               <TouchableOpacity
-                onPress={() => job.sourceUrl && Linking.openURL(job.sourceUrl)}
+                onPress={() => job.companyWebsite && Linking.openURL(job.companyWebsite)}
                 className="flex-1 bg-white p-5 rounded-2xl border border-slate-200/60 items-center shadow-sm"
               >
                 <Text className="text-indigo-600 font-bold text-[12px] uppercase">Company Website</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => job.applicationUrl && Linking.openURL(job.applicationUrl)}
+                onPress={() => job.applyUrl && Linking.openURL(job.applyUrl)}
                 className="flex-1 bg-white p-5 rounded-2xl border border-slate-200/60 items-center shadow-sm"
               >
-                <Text className="text-indigo-600 font-bold text-[12px] uppercase">Original Post</Text>
+                <Text className="text-indigo-600 font-bold text-[12px] uppercase">Apply Link</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -256,7 +257,7 @@ export default function JobDetailsScreen() {
               <Text className="text-indigo-300 font-bold uppercase text-[10px] tracking-widest">Agent Strategic Analysis</Text>
             </View>
             <Text className="text-white text-xl font-bold leading-snug">
-              This role at {job.company} represents a logical progression for your career trajectory.
+              This role at {job.companyName} represents a logical progression for your career trajectory.
               The {job.title} position leverages your full technical arsenal with high efficiency.
             </Text>
           </View>

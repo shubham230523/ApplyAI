@@ -129,7 +129,12 @@ export class ResumeService {
   ) {
     if (!db) return;
 
-    // Save/Update Resume record
+    // 1. Reset other main resumes for this user
+    await db.update(resumes)
+      .set({ isMain: false })
+      .where(eq(resumes.userId, userId));
+
+    // 2. Insert the new resume as the main one
     await db.insert(resumes).values({
       userId,
       fileName,
@@ -137,14 +142,6 @@ export class ResumeService {
       contentType: 'application/pdf',
       parsedContent: extractedData,
       isMain: true,
-    }).onConflictDoUpdate({
-      target: resumes.id, // Note: resumes table might need userId + fileName or similar for meaningful conflict
-      set: { updatedAt: new Date() }
     });
-
-    // Reset other main resumes
-    await db.update(resumes)
-      .set({ isMain: false })
-      .where(eq(resumes.userId, userId));
   }
 }

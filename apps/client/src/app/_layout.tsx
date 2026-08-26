@@ -24,6 +24,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return;
 
+    /*
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!session && !inAuthGroup) {
@@ -31,6 +32,7 @@ function RootLayoutNav() {
     } else if (session && inAuthGroup) {
       router.replace('/');
     }
+    */
   }, [session, loading, segments]);
 
   useEffect(() => {

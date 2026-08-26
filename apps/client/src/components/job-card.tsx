@@ -30,12 +30,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
     router.push(`/job/${job.id}`);
   };
 
-  const formatSalary = (min: number | undefined, max: number | undefined) => {
+  const formatSalary = (min: number | string | undefined, max: number | string | undefined) => {
     if (!min && !max) return 'Not Disclosed';
-    const convert = (val: number) => {
-      if (val > 100000) return (val / 100000).toFixed(1);
-      if (val > 1000) return (val / 1000).toFixed(1);
-      return val;
+    const convert = (val: number | string) => {
+      const numericVal = typeof val === 'string' ? parseFloat(val) : val;
+      if (numericVal > 100000) return (numericVal / 100000).toFixed(1);
+      if (numericVal > 1000) return (numericVal / 1000).toFixed(1);
+      return numericVal;
     };
     const minLPA = min ? convert(min) : '';
     const maxLPA = max ? convert(max) : '';
@@ -67,10 +68,10 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
             </TouchableOpacity>
 
             <Image
-              source={{ uri: job.companyLogo }}
+              source={{ uri: job.companyLogoUrl }}
               style={{ width: 32, height: 32, borderRadius: 8 }}
               contentFit="contain"
-              placeholder={{ uri: `https://api.dicebear.com/7.x/initials/svg?seed=${job.company}` }}
+              placeholder={{ uri: `https://api.dicebear.com/7.x/initials/svg?seed=${job.companyName}` }}
             />
           </View>
 
@@ -79,7 +80,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
             <Text className="text-[14px] font-bold text-slate-900 tracking-tight leading-snug" style={{ fontFamily: 'Outfit' }} numberOfLines={2}>{job.title}</Text>
 
             {/* Line 3: Company Name */}
-            <Text className="text-[12px] font-semibold text-slate-400 mt-1" numberOfLines={1}>{job.company}</Text>
+            <Text className="text-[12px] font-semibold text-slate-400 mt-1" numberOfLines={1}>{job.companyName}</Text>
 
             {/* Line 4: Match Score & Work Mode */}
             <View className="flex-row items-center mt-2 gap-1.5">
@@ -87,7 +88,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
                 <Text className="text-indigo-600 text-[9px] font-bold tracking-tight">{matchScore}% MATCH</Text>
               </View>
               <View className="bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200">
-                <Text className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">{job.workMode}</Text>
+                <Text className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">{job.workplaceType}</Text>
               </View>
             </View>
 

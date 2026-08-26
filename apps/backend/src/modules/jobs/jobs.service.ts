@@ -1,7 +1,7 @@
 import { db } from '../../db/index.js';
 import { jobs } from '../../db/schema.js';
 import { Job, JobSearchParams } from '@applyai/shared-types';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
 export class JobsService {
@@ -13,7 +13,6 @@ export class JobsService {
 
   async searchJobs(params: JobSearchParams): Promise<Job[]> {
     // In a real scenario, this would call multiple job board APIs
-    // For now, we'll return mock data based on the extracted params
     const mockJobs = this.generateMockJobs(params);
 
     // Save to Cache for Detail Screen
@@ -23,7 +22,7 @@ export class JobsService {
     try {
       await this.syncJobsWithDB(mockJobs);
     } catch (e) {
-      console.warn('DB Sync failed, continuing with cache');
+      console.warn('DB Sync failed, continuing with cache', e);
     }
 
     return mockJobs;
@@ -37,8 +36,8 @@ export class JobsService {
     // Fallback to DB
     try {
       if (!db) return null;
-      const result = await db.select().from(jobs).where(sql`${jobs.id} = ${id}`);
-      return (result[0] as Job) || null;
+      const result = await db.select().from(jobs).where(eq(jobs.id, id));
+      return (result[0] as any as Job) || null;
     } catch (e) {
       return null;
     }
@@ -50,27 +49,24 @@ export class JobsService {
 
     return Array.from({ length: 5 }).map((_, i) => ({
       id: randomUUID(),
+      externalId: `mock-${i}-${Date.now()}`,
       source: 'MockBoard',
-      sourceJobId: `mock-${i}-${Date.now()}`,
       title: titles[i % titles.length],
-      company: `TechCorp ${i + 1}`,
-      companyLogo: `https://api.dicebear.com/7.x/initials/svg?seed=TechCorp${i}`,
-      description: `Exciting opportunity for a ${params.title || 'developer'} in ${location}. Required skills: ${(params.skills || ['React', 'Node.js']).join(', ')}.`,
+      companyName: `TechCorp ${i + 1}`,
+      companyLogoUrl: `https://api.dicebear.com/7.x/initials/svg?seed=TechCorp${i}`,
+      description: `Exciting opportunity for a ${params.title || 'developer'} in ${location}.`,
       location: location,
-      country: 'India',
-      city: location,
-      workMode: params.workMode || 'remote',
-      employmentType: 'Full-time',
-      experienceMin: params.experienceMin || 2,
-      experienceMax: (params.experienceMin || 2) + 3,
+      countryCode: 'IN',
+      workplaceType: params.workplaceType || 'REMOTE',
+      employmentType: params.employmentType || 'FULL_TIME',
+      experienceLevel: params.experienceLevel || 'MID_LEVEL',
       salaryMin: params.salaryMin || 10,
       salaryMax: (params.salaryMin || 10) + 5,
       salaryCurrency: 'INR',
-      skills: params.skills || ['JavaScript', 'TypeScript'],
+      salaryPeriod: 'YEARLY',
+      applyUrl: 'https://example.com/apply',
+      isActive: true,
       postedAt: new Date(),
-      applicationUrl: 'https://example.com/apply',
-      applicationMethod: 'url',
-      sourceUrl: 'https://example.com/job',
       createdAt: new Date(),
       updatedAt: new Date(),
     }));
@@ -80,25 +76,29 @@ export class JobsService {
     if (!db) return;
     for (const job of jobList) {
       await db.insert(jobs).values({
+        id: job.id,
+        externalId: job.externalId,
         source: job.source,
-        sourceJobId: job.sourceJobId,
         title: job.title,
-        company: job.company,
-        companyLogo: job.companyLogo,
         description: job.description,
+        companyName: job.companyName,
+        companyWebsite: job.companyWebsite,
+        companyLogoUrl: job.companyLogoUrl,
         location: job.location,
-        workMode: job.workMode,
+        countryCode: job.countryCode,
+        workplaceType: job.workplaceType,
         employmentType: job.employmentType,
-        experienceMin: job.experienceMin,
-        experienceMax: job.experienceMax,
-        salaryMin: job.salaryMin,
-        salaryMax: job.salaryMax,
+        experienceLevel: job.experienceLevel,
         salaryCurrency: job.salaryCurrency,
-        skills: job.skills,
-        postedAt: job.postedAt,
-        applicationUrl: job.applicationUrl,
+        salaryMin: job.salaryMin?.toString(),
+        salaryMax: job.salaryMax?.toString(),
+        salaryPeriod: job.salaryPeriod,
+        applyUrl: job.applyUrl,
+        contactEmail: job.contactEmail,
+        isActive: job.isActive,
+        postedAt: job.postedAt ? new Date(job.postedAt) : new Date(),
       }).onConflictDoUpdate({
-        target: [jobs.source, jobs.sourceJobId],
+        target: [jobs.externalId],
         set: {
           title: job.title,
           updatedAt: new Date(),
