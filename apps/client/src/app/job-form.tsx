@@ -42,6 +42,31 @@ export default function JobFormScreen() {
   }>({ visible: false, expIndex: -1, field: 'startDate' });
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      try {
+        const response = await fetch(`${apiUrl}/api/profile`);
+        if (response.ok) {
+          const profile = await response.json();
+          if (profile) {
+            setForm({
+              name: profile.name || '',
+              email: profile.email || '',
+              phone: profile.phone || '',
+              yearsExperience: String(profile.yearsExperience || ''),
+              skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : '',
+              education: Array.isArray(profile.education) ? profile.education.join(', ') : '',
+              location: profile.location || '',
+              expectedSalary: profile.expectedSalary || '',
+              workExperience: Array.isArray(profile.workExperience) ? profile.workExperience : [],
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch profile:', e);
+      }
+    };
+
     if (data) {
       try {
         const parsed = JSON.parse(data as string);
@@ -59,16 +84,48 @@ export default function JobFormScreen() {
       } catch (e) {
         console.error('Failed to parse extracted data');
       }
+    } else {
+      fetchProfile();
     }
   }, [data]);
 
   const handleSave = async () => {
     setLoading(true);
-    // Simulate save to profiles table
-    setTimeout(() => {
-      setLoading(false);
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
+    try {
+      const payload = {
+        name: form.name,
+        phone: form.phone,
+        yearsExperience: parseInt(form.yearsExperience) || 0,
+        skills: form.skills.split(',').map(s => s.trim()).filter(s => s !== ''),
+        preferredLocations: form.location.split(',').map(s => s.trim()).filter(s => s !== ''),
+        preferredSalary: parseInt(form.expectedSalary) || 0,
+        workExperience: form.workExperience, // The schema doesn't explicitly list this, but it might be in the DB
+      };
+
+      const response = await fetch(`${apiUrl}/api/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Profile save error:', errorText);
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
+
       router.replace('/(tabs)');
-    }, 1500);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Failed to save profile. Please ensure the backend is running and supports PATCH requests.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDateConfirm = (date: Date) => {

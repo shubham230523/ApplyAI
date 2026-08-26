@@ -4,7 +4,7 @@ import { authenticate } from '../../common/auth.middleware.js';
 
 export async function profileRoutes(fastify: FastifyInstance) {
   fastify.get(
-    '/',
+    '',
     {
       preHandler: [authenticate],
     },
@@ -16,7 +16,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
   );
 
   fastify.patch(
-    '/',
+    '',
     {
       preHandler: [authenticate],
     },

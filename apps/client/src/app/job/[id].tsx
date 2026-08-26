@@ -58,20 +58,30 @@ export default function JobDetailsScreen() {
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
     try {
-      // 1. Check if profile exists before applying
+      // 1. Check if profile exists and is complete before applying
       const response = await fetch(`${apiUrl}/api/profile`);
-      const profile = await response.json();
-
-      if (!profile) {
+      if (!response.ok) {
         setShowForceUpload(true);
         return;
       }
 
-      // 2. If profile exists, proceed to application URL
+      const profile = await response.json();
+
+      // Check if profile is substantially complete
+      if (!profile || !profile.name || !profile.email) {
+        setShowForceUpload(true);
+        return;
+      }
+
+      // 2. If profile exists and is complete, proceed to application URL
       if (job?.applicationUrl) {
+        console.log('Direct apply to:', job.applicationUrl);
         Linking.openURL(job.applicationUrl);
+      } else {
+        alert('Application URL not found for this job.');
       }
     } catch (e) {
+      console.error('Apply error:', e);
       // If profile check fails, better safe than sorry: show upload
       setShowForceUpload(true);
     }

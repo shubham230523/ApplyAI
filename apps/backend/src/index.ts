@@ -14,9 +14,14 @@ import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
   logger: true,
+  ignoreTrailingSlash: true,
 });
 
-fastify.register(cors, { origin: '*' });
+fastify.register(cors, {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+});
 
 if (process.env.SUPABASE_JWT_SECRET) {
   fastify.register(jwt, { secret: process.env.SUPABASE_JWT_SECRET });
