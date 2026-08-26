@@ -47,8 +47,12 @@ export interface JobSearchParams {
   location?: string;
   skills?: string[];
   experienceMin?: number;
+  experienceLevel?: 'ENTRY_LEVEL' | 'MID_LEVEL' | 'SENIOR_LEVEL' | 'DIRECTOR' | 'EXECUTIVE' | 'INTERNSHIP';
+  employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'TEMPORARY' | 'INTERNSHIP' | 'OTHER';
+  workplaceType?: 'ON_SITE' | 'HYBRID' | 'REMOTE';
   salaryMin?: number;
   workMode?: 'remote' | 'hybrid' | 'onsite';
+  postedAfter?: string; // ISO Date String
 }
 
 export interface OrchestratorResponse {

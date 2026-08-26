@@ -1,20 +1,3 @@
-// Global Diagnostic Handlers - MUST BE AT THE VERY TOP
-process.on('uncaughtException', (err) => {
-  console.error('CRITICAL UNCAUGHT EXCEPTION:');
-  console.error(err);
-  try {
-    console.error(JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
-  } catch (e) {
-    console.error('Could not stringify error');
-  }
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('UNHANDLED REJECTION:', reason);
-  process.exit(1);
-});
-
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -37,55 +20,32 @@ const fastify = Fastify({
 fastify.setValidatorCompiler(validatorCompiler);
 fastify.setSerializerCompiler(serializerCompiler);
 
-// Plugins
-fastify.register(cors, {
-  origin: '*', // Adjust for production
-});
+fastify.register(cors, { origin: '*' });
 
 if (process.env.SUPABASE_JWT_SECRET) {
-  fastify.register(jwt, {
-    secret: process.env.SUPABASE_JWT_SECRET,
-  });
+  fastify.register(jwt, { secret: process.env.SUPABASE_JWT_SECRET });
 }
 
 fastify.register(swagger, {
-  openapi: {
-    info: {
-      title: 'ApplyAI API',
-      description: 'AI-Powered Job Search & Auto-Apply Platform API',
-      version: '1.0.0',
-    },
-  },
+  openapi: { info: { title: 'ApplyAI API', version: '1.0.0' } },
   transform: jsonSchemaTransform,
 });
 
-fastify.register(swaggerUi, {
-  routePrefix: '/docs',
-});
+fastify.register(swaggerUi, { routePrefix: '/docs' });
 
-// Health Check
-fastify.get('/health', async () => {
-  return { status: 'ok', timestamp: new Date().toISOString() };
-});
+fastify.get('/health', async () => ({ status: 'ok' }));
 
-// API Routes
-console.log('Registering Profile routes...');
 fastify.register(profileRoutes, { prefix: '/api/profile' });
-console.log('Registering Orchestrator routes...');
 fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
-console.log('Registering Resume routes...');
 fastify.register(resumeRoutes, { prefix: '/api/resume' });
-console.log('Registering Application routes...');
 fastify.register(applicationRoutes, { prefix: '/api/applications' });
-console.log('Registering Jobs routes...');
 fastify.register(jobsRoutes, { prefix: '/api/jobs' });
 
-// Start Server
 const start = async () => {
   try {
-    const port = process.env.PORT ? parseInt(process.env.PORT) : 4000;
+    const port = Number(process.env.PORT) || 4000;
     await fastify.listen({ port, host: '0.0.0.0' });
-    console.log(`Server listening on http://localhost:${port}`);
+    console.log(`Server listening on port ${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
