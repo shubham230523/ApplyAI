@@ -30,6 +30,10 @@ const ResumeSchema = {
     yearsExperience: { type: "number" },
     skills: { type: "array", items: { type: "string" } },
     education: { type: "array", items: { type: "string" } },
+    certifications: { type: "array", items: { type: "string" } },
+    projects: { type: "array", items: { type: "string" } },
+    achievements: { type: "array", items: { type: "string" } },
+    summary: { type: "string" },
     workExperience: {
       type: "array",
       items: {
@@ -62,19 +66,28 @@ export class AIService {
     return this._client;
   }
 
-  private async callAI(messages: any[], jsonSchema?: any): Promise<any> {
-    const prompt = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
+  private async callAI(messages: any[], jsonSchema?: any, fileData?: { data: string, mimeType: string }): Promise<any> {
+    const promptText = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
     const finalPrompt = jsonSchema
-      ? `${prompt}\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`
-      : prompt;
+      ? `${promptText}\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`
+      : promptText;
 
     try {
-      const result = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: finalPrompt
-      });
+      const model = this.client.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      const content = result.text.trim();
+      const parts: any[] = [{ text: finalPrompt }];
+      if (fileData) {
+        parts.push({
+          inlineData: {
+            data: fileData.data,
+            mimeType: fileData.mimeType
+          }
+        });
+      }
+
+      const result = await model.generateContent(parts);
+      const response = await result.response;
+      const content = response.text().trim();
 
       if (jsonSchema) {
         try {
@@ -293,6 +306,27 @@ export class AIService {
     } catch (e) {}
 
     return { query, params, jobs, message };
+  }
+
+  async parseResumeMultimodal(buffer: Buffer, mimeType: string): Promise<CandidateProfile> {
+    const base64Data = buffer.toString('base64');
+
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert resume parser. Extract structured data from the provided resume file.
+        Handle complex multi-column layouts, tables, and non-standard sections accurately.
+        If the file is an image, perform high-fidelity OCR first.`
+      },
+      { role: 'user', content: 'Parse this resume.' }
+    ];
+
+    try {
+      return await this.callAI(messages, ResumeSchema, { data: base64Data, mimeType });
+    } catch (e) {
+      console.error('Multimodal parsing failed:', e);
+      throw e;
+    }
   }
 
   async parseResumeText(text: string): Promise<CandidateProfile> {

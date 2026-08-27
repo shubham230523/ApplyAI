@@ -12,17 +12,15 @@ export async function resumeRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
-    // Log the incoming mimetype for debugging
-    console.log(`Incoming file: ${data.filename}, mimetype: ${data.mimetype}`);
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/png'
+    ];
 
-    const allowedMimeTypes = ['application/pdf', 'application/x-pdf', 'application/octet-stream'];
-    const isPdfExtension = data.filename.toLowerCase().endsWith('.pdf');
-
-    if (!allowedMimeTypes.includes(data.mimetype) && !isPdfExtension) {
-      return reply.status(400).send({
-        error: 'Only PDF files are allowed',
-        message: `Received file of type ${data.mimetype}`
-      });
+    if (!allowedMimeTypes.includes(data.mimetype)) {
+      return reply.status(400).send({ error: 'Unsupported file type. Please upload PDF, DOCX, JPG, or PNG.' });
     }
 
     const userId = request.user.sub;
@@ -33,7 +31,7 @@ export async function resumeRoutes(fastify: FastifyInstance) {
       await getOrCreateUser(userId, email);
 
       const buffer = await data.toBuffer();
-      const extractedData = await resumeService.uploadAndParse(buffer, userId, data.filename);
+      const extractedData = await resumeService.uploadAndParse(buffer, userId, data.filename, data.mimetype);
       return {
         message: 'Resume processed successfully',
         extractedData

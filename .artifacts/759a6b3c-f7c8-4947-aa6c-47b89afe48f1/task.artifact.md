@@ -1,0 +1,7 @@
+- [x] Install backend dependencies (`mammoth`)
+- [x] Update `ai.service.ts` with multimodal Gemini parsing
+- [x] Refine `ResumeSchema` in `ai.service.ts` for comprehensive extraction
+- [x] Update `ResumeService.uploadAndParse` to handle multiple MIME types
+- [x] Implement DOCX extraction using `mammoth` in `ResumeService`
+- [x] Update `resume.routes.ts` to allow DOCX and images
+- [x] Verify the pipeline and project build

@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdf = require('pdf-parse');
+const mammoth = require('mammoth');
 import { randomUUID } from 'crypto';
 import { AIService } from '../ai/ai.service.js';
 
@@ -15,7 +16,7 @@ export class ResumeService {
   /**
    * Uploads resume to Supabase Storage and parses it for key fields.
    */
-  async uploadAndParse(fileBuffer: Buffer, userId: string, fileName: string): Promise<any> {
+  async uploadAndParse(fileBuffer: Buffer, userId: string, fileName: string, mimeType: string): Promise<any> {
     const fileId = randomUUID();
     const storagePath = `${userId}/${fileId}-${fileName}`;
 
@@ -23,52 +24,47 @@ export class ResumeService {
     const { data: storageData, error: storageError } = await supabase.storage
       .from('resumes')
       .upload(storagePath, fileBuffer, {
-        contentType: 'application/pdf',
+        contentType: mimeType,
         upsert: true
       });
 
     if (storageError) {
       console.error('Supabase Storage Error:', storageError);
-
-      // If bucket doesn't exist, try creating it and retrying once
-      if ((storageError as any).code === 'NoSuchBucket' || storageError.message?.includes('not found')) {
-        console.log('Attempting to create "resumes" bucket...');
-        try {
-          await supabase.storage.createBucket('resumes', { public: true });
-          // Retry upload
-          const { data: retryData, error: retryError } = await supabase.storage
-            .from('resumes')
-            .upload(storagePath, fileBuffer, {
-              contentType: 'application/pdf',
-              upsert: true
-            });
-          if (retryError) throw retryError;
-        } catch (e) {
-          console.error('Failed to create bucket or retry upload:', e);
-          throw new Error('Failed to upload resume: Storage bucket not configured.');
-        }
-      } else {
-        throw new Error('Failed to upload resume to storage');
-      }
+      throw new Error('Failed to upload resume to storage');
     }
 
     const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(storagePath);
 
-    // 2. Extract Text using pdf-parse
-    const pdfData = await pdf(fileBuffer);
-    const rawText = pdfData.text;
-
-    // 3. AI-Powered Extraction (Optimized)
+    // 2. AI-Powered Extraction
     let extractedData: Partial<CandidateProfile>;
     try {
-      extractedData = await aiService.parseResumeText(rawText);
+      if (mimeType === 'application/pdf' || mimeType.startsWith('image/')) {
+        // Use multimodal for PDF and Images (layout aware)
+        extractedData = await aiService.parseResumeMultimodal(fileBuffer, mimeType);
+      } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        // Use mammoth for DOCX extraction
+        const docxResult = await mammoth.extractRawText({ buffer: fileBuffer });
+        extractedData = await aiService.parseResumeText(docxResult.value);
+      } else {
+        // Fallback for plain text or unknown
+        const text = fileBuffer.toString('utf-8');
+        extractedData = await aiService.parseResumeText(text);
+      }
     } catch (e) {
-      console.warn('AI Parsing failed, falling back to heuristics');
-      extractedData = this.heuristicExtract(rawText);
+      console.warn('AI Parsing failed, falling back to heuristics', e);
+      // Fallback text extraction for heuristics
+      let fallbackText = '';
+      if (mimeType === 'application/pdf') {
+        const pdfData = await pdf(fileBuffer);
+        fallbackText = pdfData.text;
+      } else {
+        fallbackText = fileBuffer.toString('utf-8');
+      }
+      extractedData = this.heuristicExtract(fallbackText);
     }
 
-    // 4. Save to Database
-    await this.saveResumeMetadata(userId, fileName, publicUrl, extractedData);
+    // 3. Save to Database
+    await this.saveResumeMetadata(userId, fileName, publicUrl, extractedData, mimeType);
 
     return {
       ...extractedData,
@@ -125,7 +121,8 @@ export class ResumeService {
     userId: string,
     fileName: string,
     fileUrl: string,
-    extractedData: any
+    extractedData: any,
+    contentType: string = 'application/pdf'
   ) {
     if (!db) return;
 
@@ -139,7 +136,7 @@ export class ResumeService {
       userId,
       fileName,
       fileUrl,
-      contentType: 'application/pdf',
+      contentType,
       parsedContent: extractedData,
       isMain: true,
     });
