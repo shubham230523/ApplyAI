@@ -34,16 +34,10 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       setError(null);
 
       const formData = new FormData();
-      if (isWeb) {
-        const blob = await fetch(file.uri).then(r => r.blob());
-        formData.append('file', blob, file.name);
-      } else {
-        formData.append('file', {
-          uri: file.uri,
-          name: file.name,
-          type: file.mimeType || 'application/pdf',
-        } as any);
-      }
+      // Use fetch to get blob for compatibility with Expo's new fetch implementation
+      const blobResponse = await fetch(file.uri);
+      const blob = await blobResponse.blob();
+      formData.append('file', blob, file.name);
 
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${apiUrl}/api/resume/upload`, {
@@ -56,7 +50,8 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
+        const fullError = errorData.message ? `${errorData.error}: ${errorData.message}` : (errorData.error || 'Upload failed');
+        throw new Error(fullError);
       }
 
       const { extractedData } = await response.json();

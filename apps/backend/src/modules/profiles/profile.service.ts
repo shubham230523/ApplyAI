@@ -1,5 +1,5 @@
 import { db } from '../../db/index.js';
-import { profiles, users, resumes } from '../../db/schema.js';
+import { profiles, users, resumes, recruiters } from '../../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { ProfileInput } from './profile.schema.js';
 
@@ -81,7 +81,7 @@ export async function updateProfile(userId: string, data: ProfileInput) {
   }
 }
 
-export async function getOrCreateUser(id: string, email: string) {
+export async function getOrCreateUser(id: string, email: string, role: string = 'candidate') {
   if (!db) throw new Error('Database not initialized');
   const [existing] = await db
     .select()
@@ -93,7 +93,36 @@ export async function getOrCreateUser(id: string, email: string) {
 
   const [created] = await db
     .insert(users)
-    .values({ id, email })
+    .values({ id, email, role })
     .returning();
   return created;
+}
+
+export async function getRecruiterProfile(userId: string) {
+  if (!db) return null;
+  const [recruiter] = await db
+    .select()
+    .from(recruiters)
+    .where(eq(recruiters.userId, userId))
+    .limit(1);
+  return recruiter;
+}
+
+export async function updateRecruiterProfile(userId: string, data: any) {
+  if (!db) return null;
+  const existing = await getRecruiterProfile(userId);
+  if (existing) {
+    const [updated] = await db
+      .update(recruiters)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(recruiters.userId, userId))
+      .returning();
+    return updated;
+  } else {
+    const [created] = await db
+      .insert(recruiters)
+      .values({ ...data, userId })
+      .returning();
+    return created;
+  }
 }

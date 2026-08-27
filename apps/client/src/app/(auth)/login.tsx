@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { useRouter, Link } from 'expo-router';
+import { useRouter, Link, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
+  const { role } = useLocalSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,8 @@ export default function LoginScreen() {
     if (error) {
       alert(error.message);
     } else {
-      router.replace('/');
+      // replace ensures the login screen is popped from the backstack
+      router.replace(role === 'recruiter' ? '/workspace' : '/assistant');
     }
     setLoading(false);
   }
@@ -49,7 +51,7 @@ export default function LoginScreen() {
               <View className="w-16 h-16 bg-indigo-600 rounded-2xl items-center justify-center shadow-lg shadow-indigo-200 mb-6 rotate-3">
                 <Icon name="sparkles.fill" size={32} color="white" />
               </View>
-              <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>ApplyAI</Text>
+              <Text className="text-3xl font-black text-slate-900 tracking-tighter">ApplyAI</Text>
               <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px] mt-2">Intelligence recruitment</Text>
             </View>
 
@@ -108,7 +110,7 @@ export default function LoginScreen() {
             </View>
 
             <View className="mt-10 items-center">
-              <Link href="/register" asChild>
+              <Link href={{ pathname: "/register", params: { role } }} asChild>
                 <TouchableOpacity>
                   <Text className="text-slate-400 text-xs font-semibold">
                     Don't have an account? <Text className="text-indigo-600 font-bold">Create one</Text>

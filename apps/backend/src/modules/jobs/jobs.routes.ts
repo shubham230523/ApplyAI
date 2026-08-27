@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { JobsService } from './jobs.service.js';
+import { JobsService } from './jobs.service';
 
 const jobsService = new JobsService();
 

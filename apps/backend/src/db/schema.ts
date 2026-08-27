@@ -3,6 +3,7 @@ import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, numeric, varch
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
+  role: text('role').default('candidate'), // 'candidate' or 'recruiter'
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -20,6 +21,17 @@ export const profiles = pgTable('profiles', {
   address: text('address'),
   profileImageUrl: text('profile_image_url'),
   noticePeriod: text('notice_period'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const recruiters = pgTable('recruiters', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull().unique(),
+  name: text('name').notNull(),
+  phone: text('phone'),
+  email: text('email').notNull(),
+  companyName: text('company_name').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

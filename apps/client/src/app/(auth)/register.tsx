@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { useRouter, Link } from 'expo-router';
+import { useRouter, Link, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
+  const { role } = useLocalSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,11 @@ export default function RegisterScreen() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          role: role || 'candidate',
+        }
+      }
     });
 
     if (error) {
@@ -40,7 +46,7 @@ export default function RegisterScreen() {
               <View className="w-16 h-16 bg-emerald-500 rounded-2xl items-center justify-center shadow-lg shadow-emerald-100 mb-6 rotate-3">
                 <Icon name="person.fill" size={32} color="white" />
               </View>
-              <Text className="text-3xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Join ApplyAI</Text>
+              <Text className="text-3xl font-black text-slate-900 tracking-tighter">Join ApplyAI</Text>
               <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px] mt-2">Start your journey</Text>
             </View>
 

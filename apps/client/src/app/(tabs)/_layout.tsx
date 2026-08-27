@@ -10,7 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 function SidebarItem({ name, icon, label, active, onPress }: { name: string, icon: any, label: string, active: boolean, onPress?: () => void }) {
   return (
-    <Link href={name === 'index' ? '/' : `/${name}`} asChild>
+    <Link href={`/${name}`} asChild>
       <TouchableOpacity
         onPress={onPress}
         className={`flex-row items-center px-3 py-2 rounded-xl mb-1.5 ${active ? 'bg-slate-900 shadow-lg shadow-slate-200' : 'hover:bg-slate-50'}`}
@@ -111,21 +111,20 @@ export default function TabsLayout() {
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
-    const formData = new FormData();
-    if (Platform.OS === 'web') {
-      const blob = await fetch(asset.uri).then(r => r.blob());
-      formData.append('file', blob, 'profile.jpg');
-    } else {
-      formData.append('file', { uri: asset.uri, name: 'profile.jpg', type: 'image/jpeg' } as any);
-    }
     try {
-      const response = await fetch(`${apiUrl}/api/profile/image`, {
+      const formData = new FormData();
+      // Use fetch to get blob for compatibility with Expo's new fetch implementation
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      formData.append('file', blob, 'profile.jpg');
+
+      const uploadResponse = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
         body: formData,
       });
-      if (response.ok) {
-        const { imageUrl } = await response.json();
+      if (uploadResponse.ok) {
+        const { imageUrl } = await uploadResponse.json();
         setProfile((prev: any) => ({ ...prev, profileImageUrl: `${imageUrl}?t=${Date.now()}` }));
       }
     } catch (e) {
@@ -141,33 +140,43 @@ export default function TabsLayout() {
       if (result.canceled) return;
       setUploading(true);
       const file = result.assets[0];
+
       const formData = new FormData();
-      if (Platform.OS === 'web') {
-        const blob = await fetch(file.uri).then(r => r.blob());
-        formData.append('file', blob, file.name);
-      } else {
-        // @ts-ignore
-        formData.append('file', {
-          uri: file.uri,
-          name: file.name,
-          type: 'application/pdf',
-        } as any);
-      }
+      // Use fetch to get blob for compatibility with Expo's new fetch implementation
+      const response = await fetch(file.uri);
+      const blob = await response.blob();
+      formData.append('file', blob, file.name);
+
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${apiUrl}/api/resume/upload`, {
+      const uploadResponse = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
         body: formData,
         headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
       });
-      const data = await response.json();
-      if (response.ok) {
+
+      const data = await uploadResponse.json();
+      if (uploadResponse.ok) {
         setRightDrawerOpen(false);
         router.push({ pathname: '/job-form', params: { data: JSON.stringify(data.extractedData) } });
+      } else {
+        const fullError = data.message ? `${data.error}: ${data.message}` : (data.error || 'Upload failed');
+        Alert.alert('Upload Error', fullError);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
+      Alert.alert('Error', error.message || 'Something went wrong');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      setRightDrawerOpen(false);
+      await signOut();
+    } catch (e) {
+      console.error('Sign out error:', e);
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
     }
   };
 
@@ -186,10 +195,10 @@ export default function TabsLayout() {
 
           <View className="flex-1">
             <SidebarItem
-              name="index"
+              name="assistant"
               icon="sparkles.fill"
               label="Assistant"
-              active={pathname === '/' || pathname === '/index'}
+              active={pathname.includes('/assistant')}
             />
             <SidebarItem
               name="applications"
@@ -206,7 +215,7 @@ export default function TabsLayout() {
           </View>
 
           <TouchableOpacity
-            onPress={signOut}
+            onPress={handleSignOut}
             className="flex-row items-center p-3 rounded-xl hover:bg-red-50"
           >
             <Icon name="rectangle.portrait.and.arrow.right" size={16} color="#ef4444" />
@@ -234,7 +243,8 @@ export default function TabsLayout() {
           tabBarStyle: { display: 'none' },
           headerShown: false,
         }}>
-          <Tabs.Screen name="index" options={{ title: 'Assistant' }} />
+          <Tabs.Screen name="index" options={{ href: null }} />
+          <Tabs.Screen name="assistant" options={{ title: 'Assistant' }} />
           <Tabs.Screen name="applications" options={{ title: 'Applications' }} />
           <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
         </Tabs>
@@ -248,20 +258,20 @@ export default function TabsLayout() {
             activeOpacity={1}
             onPress={() => setLeftDrawerOpen(false)}
           />
-          <View className="w-72 bg-white h-full p-8 shadow-2xl" style={{ paddingTop: insets.top + 32 }}>
-             <View className="flex-row justify-between items-center mb-12">
-                <Text className={`font-black text-slate-900 tracking-tighter ${isMobile ? 'text-3xl' : 'text-xl'}`} style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
+          <View className="w-72 bg-white h-full p-10 shadow-2xl" style={{ paddingTop: insets.top + 48 }}>
+             <View className="flex-row justify-between items-center mb-16">
+                <Text className={`font-black text-slate-900 tracking-tighter ${isMobile ? 'text-4xl' : 'text-2xl'}`} style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
                 <TouchableOpacity onPress={() => setLeftDrawerOpen(false)}>
-                  <Icon name="xmark" size={24} color="#64748b" />
+                  <Icon name="xmark" size={28} color="#64748b" />
                 </TouchableOpacity>
              </View>
 
-             <View className="flex-1 gap-4">
+             <View className="flex-1 gap-8">
                 <SidebarItem
-                  name="index"
+                  name="assistant"
                   icon="sparkles.fill"
                   label="Assistant"
-                  active={pathname === '/' || pathname === '/index'}
+                  active={pathname.includes('/assistant')}
                   onPress={() => setLeftDrawerOpen(false)}
                 />
                 <SidebarItem
@@ -299,10 +309,7 @@ export default function TabsLayout() {
                 uploadingImage={uploadingImage}
                 onPickImage={handlePickImage}
                 onUploadResume={handleUploadResume}
-                onSignOut={() => {
-                  setRightDrawerOpen(false);
-                  signOut();
-                }}
+                onSignOut={handleSignOut}
              />
           </View>
         </View>

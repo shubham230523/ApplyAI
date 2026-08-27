@@ -18,23 +18,34 @@ const queryClient = new QueryClient();
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { session, loading } = useAuth();
+  const { session, loading, role } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (loading) return;
 
-    /*
     const inAuthGroup = segments[0] === '(auth)';
+    const inRecruiterGroup = segments[0] === '(recruiter)';
+    const inCandidateGroup = segments[0] === '(tabs)';
+    const isAtSelectionScreen = segments.length === 0 || (segments.length === 1 && segments[0] === 'index');
 
-    if (!session && !inAuthGroup) {
-      router.replace('/login');
-    } else if (session && inAuthGroup) {
-      router.replace('/');
+    if (!session) {
+      if (!inAuthGroup && !isAtSelectionScreen) {
+         router.replace('/');
+      }
+    } else {
+      if (role === 'recruiter') {
+        if (!inRecruiterGroup || isAtSelectionScreen) {
+          router.replace('/workspace');
+        }
+      } else {
+        if (!inCandidateGroup || isAtSelectionScreen) {
+          router.replace('/assistant');
+        }
+      }
     }
-    */
-  }, [session, loading, segments]);
+  }, [session, loading, segments.join(','), role]);
 
   useEffect(() => {
     if (!loading) {
@@ -45,10 +56,7 @@ function RootLayoutNav() {
   if (loading) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(auth)/login" />
-    </Stack>
+    <Stack screenOptions={{ headerShown: false }} />
   );
 }
 

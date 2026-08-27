@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
-import { getProfile, updateProfile, getOrCreateUser } from './profile.service.js';
-import { authenticate } from '../../common/auth.middleware.js';
-import { supabase } from '../../lib/supabase.js';
+import { getProfile, updateProfile, getOrCreateUser, getRecruiterProfile, updateRecruiterProfile } from './profile.service';
+import { authenticate } from '../../common/auth.middleware';
+import { supabase } from '../../lib/supabase';
 import { randomUUID } from 'crypto';
 
 export async function profileRoutes(fastify: FastifyInstance) {
@@ -18,7 +18,8 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const dbUser = await getOrCreateUser(request.user.sub, request.user.email);
+      const role = request.user.user_metadata?.role || 'candidate';
+      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, role);
       const profile = await getProfile(dbUser.id);
       return profile || null;
     }
@@ -30,7 +31,8 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const dbUser = await getOrCreateUser(request.user.sub, request.user.email);
+      const role = request.user.user_metadata?.role || 'candidate';
+      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, role);
       const profile = await updateProfile(dbUser.id, request.body as any);
       return profile;
     }
@@ -87,6 +89,30 @@ export async function profileRoutes(fastify: FastifyInstance) {
         console.error('Profile image upload error:', err);
         return reply.status(500).send({ error: err.message || 'Failed to upload image' });
       }
+    }
+  );
+
+  fastify.get(
+    '/recruiter',
+    {
+      preHandler: [authenticate],
+    },
+    async (request, reply) => {
+      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
+      const profile = await getRecruiterProfile(dbUser.id);
+      return profile || null;
+    }
+  );
+
+  fastify.patch(
+    '/recruiter',
+    {
+      preHandler: [authenticate],
+    },
+    async (request, reply) => {
+      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
+      const profile = await updateRecruiterProfile(dbUser.id, request.body as any);
+      return profile;
     }
   );
 }

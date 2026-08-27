@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
-import { ResumeService } from './resume.service.js';
-import { authenticate } from '../../common/auth.middleware.js';
-import { getOrCreateUser } from '../profiles/profile.service.js';
+import { ResumeService } from './resume.service';
+import { authenticate } from '../../common/auth.middleware';
+import { getOrCreateUser } from '../profiles/profile.service';
 
 const resumeService = new ResumeService();
 

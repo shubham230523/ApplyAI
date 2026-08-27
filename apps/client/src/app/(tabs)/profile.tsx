@@ -54,21 +54,14 @@ export default function ProfileScreen() {
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
-    const formData = new FormData();
-
-    if (Platform.OS === 'web') {
-      const blob = await fetch(asset.uri).then(r => r.blob());
-      formData.append('file', blob, 'profile.jpg');
-    } else {
-      formData.append('file', {
-        uri: asset.uri,
-        name: 'profile.jpg',
-        type: 'image/jpeg',
-      } as any);
-    }
-
     try {
-      const response = await fetch(`${apiUrl}/api/profile/image`, {
+      const formData = new FormData();
+      // Use fetch to get blob for compatibility with Expo's new fetch implementation
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      formData.append('file', blob, 'profile.jpg');
+
+      const uploadResponse = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -76,8 +69,8 @@ export default function ProfileScreen() {
         body: formData,
       });
 
-      if (response.ok) {
-        const { imageUrl } = await response.json();
+      if (uploadResponse.ok) {
+        const { imageUrl } = await uploadResponse.json();
         const cacheBusterUrl = `${imageUrl}?t=${Date.now()}`;
         setProfile((prev: any) => ({ ...prev, profileImageUrl: cacheBusterUrl }));
         Alert.alert('Success', 'Profile image updated successfully.');
@@ -105,17 +98,10 @@ export default function ProfileScreen() {
       const file = result.assets[0];
 
       const formData = new FormData();
-      if (Platform.OS === 'web') {
-        const blob = await fetch(file.uri).then(r => r.blob());
-        formData.append('file', blob, file.name);
-      } else {
-        // @ts-ignore
-        formData.append('file', {
-          uri: file.uri,
-          name: file.name,
-          type: 'application/pdf',
-        });
-      }
+      // Use fetch to get blob for compatibility with Expo's new fetch implementation
+      const blobResponse = await fetch(file.uri);
+      const blob = await blobResponse.blob();
+      formData.append('file', blob, file.name);
 
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${apiUrl}/api/resume/upload`, {
@@ -144,6 +130,16 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      // No need for manual router.replace('/') as RootLayout handles navigation based on session state
+    } catch (e) {
+      console.error('Sign out error:', e);
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+    }
+  };
+
   if (loadingProfile) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
@@ -161,7 +157,7 @@ export default function ProfileScreen() {
         uploadingImage={uploadingImage}
         onPickImage={handlePickImage}
         onUploadResume={handleUploadResume}
-        onSignOut={signOut}
+        onSignOut={handleSignOut}
       />
     </SafeAreaView>
   );

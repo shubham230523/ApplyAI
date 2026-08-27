@@ -142,21 +142,14 @@ export default function JobFormScreen() {
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
-    const formData = new FormData();
-
-    if (Platform.OS === 'web') {
-      const blob = await fetch(asset.uri).then(r => r.blob());
-      formData.append('file', blob, 'profile.jpg');
-    } else {
-      formData.append('file', {
-        uri: asset.uri,
-        name: 'profile.jpg',
-        type: 'image/jpeg',
-      } as any);
-    }
-
     try {
-      const response = await fetch(`${apiUrl}/api/profile/image`, {
+      const formData = new FormData();
+      // Use fetch to get blob for compatibility with Expo's new fetch implementation
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      formData.append('file', blob, 'profile.jpg');
+
+      const uploadResponse = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -164,8 +157,8 @@ export default function JobFormScreen() {
         body: formData,
       });
 
-      if (response.ok) {
-        const { imageUrl } = await response.json();
+      if (uploadResponse.ok) {
+        const { imageUrl } = await uploadResponse.json();
         setForm(f => ({ ...f, profileImageUrl: imageUrl }));
       } else {
         throw new Error('Failed to upload image');
@@ -217,7 +210,7 @@ export default function JobFormScreen() {
         throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
 
-      router.replace('/(tabs)');
+      router.replace('/assistant');
     } catch (error) {
       console.error('Error saving profile:', error);
       Alert.alert('Error', 'Failed to save profile. Please ensure the backend is running.');

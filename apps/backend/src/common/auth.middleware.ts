@@ -1,20 +1,36 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { supabase } from '../lib/supabase';
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
-  // For testing: bypass auth with a valid UUID
-  request.user = {
-    sub: 'd83c4b7a-9f1e-4b7a-9f1e-d83c4b7a9f1e',
-    email: 'test@example.com'
-  };
-  return;
-
-  /*
   try {
-    await request.jwtVerify();
-  } catch (err) {
-    reply.status(401).send({ error: 'Unauthorized' });
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Missing or invalid Authorization header');
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // Delegate verification to Supabase Auth API
+    // This handles both HS256 and ES256 automatically
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      throw error || new Error('User not found');
+    }
+
+    // Map Supabase user to the format expected by the rest of the app
+    request.user = {
+      sub: user.id,
+      email: user.email || '',
+      user_metadata: user.user_metadata as any
+    };
+  } catch (err: any) {
+    console.error(`Authentication failed: ${err.message}`);
+    reply.status(401).send({
+      error: 'Unauthorized',
+      message: err.message
+    });
   }
-  */
 }
 
 declare module '@fastify/jwt' {
@@ -22,10 +38,16 @@ declare module '@fastify/jwt' {
     payload: {
       sub: string;
       email: string;
+      user_metadata?: {
+        role?: string;
+      };
     };
     user: {
       sub: string;
       email: string;
+      user_metadata?: {
+        role?: string;
+      };
     };
   }
 }
