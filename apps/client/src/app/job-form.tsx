@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
+import { useAuth } from '@/contexts/auth';
 
 interface WorkExperience {
   company: string;
@@ -18,6 +19,7 @@ interface WorkExperience {
 }
 
 export default function JobFormScreen() {
+  const { session } = useAuth();
   const { data } = useLocalSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -52,7 +54,11 @@ export default function JobFormScreen() {
     const fetchProfile = async () => {
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const response = await fetch(`${apiUrl}/api/profile`);
+        const response = await fetch(`${apiUrl}/api/profile`, {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        });
         if (response.ok) {
           const profile = await response.json();
           if (profile) {
@@ -96,9 +102,9 @@ export default function JobFormScreen() {
         console.error('Failed to parse extracted data');
       }
     } else {
-      fetchProfile();
+      if (session) fetchProfile();
     }
-  }, [data]);
+  }, [data, session]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -151,6 +157,9 @@ export default function JobFormScreen() {
     try {
       const response = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: formData,
       });
 
@@ -197,6 +206,7 @@ export default function JobFormScreen() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify(payload),
       });

@@ -3,6 +3,7 @@ import { View, Text, Modal, TouchableOpacity, ActivityIndicator, Platform, useWi
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { Icon } from './ui/icon';
+import { useAuth } from '@/contexts/auth';
 
 interface ResumeUploadModalProps {
   visible: boolean;
@@ -11,6 +12,7 @@ interface ResumeUploadModalProps {
 }
 
 export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, onClose, forceMode = false }) => {
+  const { session } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -50,6 +52,9 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: formData,
         // REMOVED Content-Type header to allow fetch to set boundary automatically
       });

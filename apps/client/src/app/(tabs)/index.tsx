@@ -18,6 +18,7 @@ import { JobFeed } from '@/components/job-feed';
 import { ResumeUploadModal } from '@/components/resume-upload-modal';
 import { Job, OrchestratorResponse } from '@applyai/shared-types';
 import { Image } from 'expo-image';
+import { useAuth } from '@/contexts/auth';
 
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ const SUGGESTIONS = [
 ];
 
 export default function AssistantScreen() {
+  const { session } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = width > 1024;
 
@@ -57,11 +59,17 @@ export default function AssistantScreen() {
   useEffect(() => {
     // Check if profile exists and get applied jobs
     const init = async () => {
+      if (!session) return;
+
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
         const [profileRes, appliedRes] = await Promise.all([
-          fetch(`${apiUrl}/api/profile`),
-          fetch(`${apiUrl}/api/applications/ids`)
+          fetch(`${apiUrl}/api/profile`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          }),
+          fetch(`${apiUrl}/api/applications/ids`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          })
         ]);
 
         if (profileRes.status === 404) {
@@ -152,7 +160,10 @@ export default function AssistantScreen() {
       console.log('Dispatching request to:', `${apiUrl}/api/orchestrator/query`);
       const response = await fetch(`${apiUrl}/api/orchestrator/query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
           query: textToSend,
           history: messages.slice(-6)

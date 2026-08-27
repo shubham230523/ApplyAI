@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { session, user, signOut } = useAuth();
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -19,7 +19,11 @@ export default function ProfileScreen() {
   const fetchProfile = async () => {
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
     try {
-      const response = await fetch(`${apiUrl}/api/profile`);
+      const response = await fetch(`${apiUrl}/api/profile`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setProfile(data);
@@ -32,8 +36,8 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (session) fetchProfile();
+  }, [session]);
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -67,6 +71,9 @@ export default function ProfileScreen() {
     try {
       const response = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: formData,
       });
 
@@ -118,6 +125,7 @@ export default function ProfileScreen() {
         body: formData,
         headers: {
           'Accept': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
         },
       });
 
