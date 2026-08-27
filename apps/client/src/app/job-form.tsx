@@ -25,7 +25,8 @@ export default function JobFormScreen() {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const { width } = useWindowDimensions();
-  const isDesktop = width > 768;
+  const isDesktop = width > 1024;
+  const isTablet = width > 768 && width <= 1024;
 
   // Form State
   const [form, setForm] = useState({

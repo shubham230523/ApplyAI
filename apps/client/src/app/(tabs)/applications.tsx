@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { Application } from '@applyai/shared-types';
@@ -11,6 +11,8 @@ export default function ApplicationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
 
   const fetchApplications = async () => {
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
@@ -53,22 +55,22 @@ export default function ApplicationsScreen() {
           />
         </View>
         <View className="flex-1 ml-4">
-          <Text className="text-lg font-bold text-gray-900" numberOfLines={1}>{item.jobTitle}</Text>
-          <Text className="text-sm font-medium text-gray-500 mt-0.5">{item.companyName}</Text>
+          <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-gray-900`} numberOfLines={1}>{item.jobTitle}</Text>
+          <Text className={`${isMobile ? 'text-base' : 'text-sm'} font-medium text-gray-500 mt-0.5`}>{item.companyName}</Text>
         </View>
         <View className={`px-3 py-1 rounded-full ${item.status === 'applied' ? 'bg-blue-50' : 'bg-gray-50'}`}>
-          <Text className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'applied' ? 'text-blue-600' : 'text-gray-500'}`}>
+          <Text className={`${isMobile ? 'text-[11px]' : 'text-[10px]'} font-black uppercase tracking-widest ${item.status === 'applied' ? 'text-blue-600' : 'text-gray-500'}`}>
             {item.status}
           </Text>
         </View>
       </View>
 
       <View className="flex-row items-center pt-3 border-t border-gray-50">
-        <Icon name="mappin.circle" size={12} color="#9ca3af" />
-        <Text className="text-xs text-gray-400 ml-1">{item.location || 'Remote'}</Text>
+        <Icon name="mappin.circle" size={isMobile ? 14 : 12} color="#9ca3af" />
+        <Text className={`${isMobile ? 'text-sm' : 'text-xs'} text-gray-400 ml-1`}>{item.location || 'Remote'}</Text>
         <Text className="text-gray-300 mx-2">•</Text>
-        <Icon name="calendar" size={12} color="#9ca3af" />
-        <Text className="text-xs text-gray-400 ml-1">
+        <Icon name="calendar" size={isMobile ? 14 : 12} color="#9ca3af" />
+        <Text className={`${isMobile ? 'text-sm' : 'text-xs'} text-gray-400 ml-1`}>
           {new Date(item.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
         </Text>
         <View className="flex-1" />
@@ -78,8 +80,8 @@ export default function ApplicationsScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1 w-full max-w-4xl mx-auto px-6">
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom', 'left', 'right']}>
+      <View className="flex-1 w-full max-w-4xl mx-auto px-4 md:px-6">
         <View className="py-8">
           <Text className="text-3xl font-black text-gray-900 tracking-tight">Applications</Text>
           <Text className="text-gray-500 mt-1 font-medium">Tracking your path to your next role</Text>

@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { JobCard } from '@/components/job-card';
 import { JobFeed } from '@/components/job-feed';
@@ -37,7 +38,9 @@ const SUGGESTIONS = [
 export default function AssistantScreen() {
   const { session } = useAuth();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isDesktop = width > 1024;
+  const isMobile = width < 768;
 
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<Message[]>([
@@ -221,30 +224,39 @@ export default function AssistantScreen() {
             {/* Chat Header - Soft Glass */}
             <View className="px-4 py-3 border-b border-slate-200/40 glass z-20 flex-row items-center justify-between">
               <View>
-                <Text className="text-lg font-bold text-slate-900 tracking-tighter" style={{ fontFamily: 'Outfit' }}>Agent Chat</Text>
+                <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900 tracking-tighter`} style={{ fontFamily: 'Outfit' }}>Agent Chat</Text>
                 <View className="flex-row items-center mt-0.5">
                   <View className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1.5" />
-                  <Text className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Context Aware</Text>
+                  <Text className={`${isMobile ? 'text-[9px]' : 'text-[8px]'} font-bold text-slate-400 uppercase tracking-tight`}>Context Aware</Text>
                 </View>
               </View>
-              <TouchableOpacity className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shadow-sm bg-indigo-50 items-center justify-center">
-                {profile?.profileImageUrl ? (
-                  <Image
-                    source={{ uri: profile.profileImageUrl }}
-                    style={{ width: '100%', height: '100%' }}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <Icon name="person.fill" size={14} color="#6366f1" />
-                )}
-              </TouchableOpacity>
+              {isDesktop && (
+                <TouchableOpacity className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shadow-sm bg-indigo-50 items-center justify-center">
+                  {profile?.profileImageUrl ? (
+                    <Image
+                      source={{ uri: profile.profileImageUrl }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <Icon name="person.fill" size={14} color="#6366f1" />
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Chat Messages */}
             <View className="flex-1 overflow-hidden">
               <ScrollView
                 ref={scrollViewRef}
-                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 32, paddingBottom: 100 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 20,
+                  paddingTop: 32,
+                  paddingBottom: 100,
+                  maxWidth: isDesktop ? undefined : 800,
+                  width: '100%',
+                  alignSelf: 'center'
+                }}
                 showsVerticalScrollIndicator={false}
                 className="flex-1"
               >
@@ -255,7 +267,7 @@ export default function AssistantScreen() {
                         ? 'bg-slate-900 rounded-br-none'
                         : 'bg-white rounded-bl-none border border-slate-200/60'
                     }`}>
-                      <Text className={`text-[12.5px] leading-relaxed ${msg.type === 'user' ? 'text-white font-medium' : 'text-slate-700'}`}>
+                      <Text className={`${isMobile ? 'text-[14.5px]' : 'text-[12.5px]'} leading-relaxed ${msg.type === 'user' ? 'text-white font-medium' : 'text-slate-700'}`}>
                         {msg.text}
                       </Text>
                     </View>
@@ -295,7 +307,7 @@ export default function AssistantScreen() {
                         onPress={() => handleSend(s)}
                         className="bg-white border border-slate-200/80 px-6 py-4 rounded-[20px] shadow-sm active:scale-95"
                       >
-                        <Text className="text-slate-900 text-[11px] font-bold uppercase tracking-tight">{s}</Text>
+                        <Text className={`text-slate-900 ${isMobile ? 'text-[12px]' : 'text-[11px]'} font-bold uppercase tracking-tight`}>{s}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -304,20 +316,23 @@ export default function AssistantScreen() {
             </View>
 
             {/* Input Bar */}
-            <View className="px-5 py-6 bg-white/95 border-t border-slate-100 z-30">
+            <View
+              className="px-5 py-6 bg-white/95 border-t border-slate-100 z-30"
+              style={{ paddingBottom: Math.max(24, insets.bottom + 8) }}
+            >
               {selectedJobIds.size > 0 && (
                 <TouchableOpacity
                   onPress={handleBulkApply}
                   disabled={applying}
                   className="bg-indigo-600 py-4 rounded-2xl mb-4 items-center shadow-xl shadow-indigo-100 active:scale-[0.99]"
                 >
-                   <Text className="text-white font-bold uppercase tracking-widest text-xs">Apply to {selectedJobIds.size} Roles</Text>
+                   <Text className={`text-white font-bold uppercase tracking-widest ${isMobile ? 'text-sm' : 'text-xs'}`}>Apply to {selectedJobIds.size} Roles</Text>
                 </TouchableOpacity>
               )}
 
               <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-[28px] pl-5 pr-2 py-1 shadow-inner">
                 <TextInput
-                  className="flex-1 min-h-[52px] text-slate-900 text-[15px] py-3"
+                  className={`flex-1 min-h-[52px] text-slate-900 ${isMobile ? 'text-[16px]' : 'text-[15px]'} py-3`}
                   placeholder="Task your agent..."
                   placeholderTextColor="#94a3b8"
                   value={query}

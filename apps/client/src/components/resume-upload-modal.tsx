@@ -18,7 +18,7 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
-  const isLargeScreen = width > 768;
+  const isDesktop = width > 1024;
 
   const handlePickDocument = async () => {
     try {
@@ -33,12 +33,8 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       setUploading(true);
       setError(null);
 
-      // Create FormData
       const formData = new FormData();
-
-      // Web handle for file upload
       if (isWeb) {
-        // file.file is often available on web from DocumentPicker
         const blob = await fetch(file.uri).then(r => r.blob());
         formData.append('file', blob, file.name);
       } else {
@@ -56,7 +52,6 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
           'Authorization': `Bearer ${session?.access_token}`,
         },
         body: formData,
-        // REMOVED Content-Type header to allow fetch to set boundary automatically
       });
 
       if (!response.ok) {
@@ -65,14 +60,11 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       }
 
       const { extractedData } = await response.json();
-
       onClose();
-      // Navigate to Job Form with extracted data
       router.push({
         pathname: '/job-form',
         params: { data: JSON.stringify(extractedData) }
       });
-
     } catch (err: any) {
       console.error('Upload error:', err);
       setError(err.message || 'Something went wrong during upload.');
@@ -82,21 +74,21 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true}>
-      <View className={`flex-1 ${isLargeScreen ? 'justify-center items-center' : 'justify-end'} bg-black/50`}>
+    <Modal visible={visible} animationType="fade" transparent={true}>
+      <View className={`flex-1 ${isDesktop ? 'justify-center items-center' : 'justify-end'} bg-slate-900/60`}>
         <View
-          style={{ width: isLargeScreen ? 600 : '100%' }}
-          className={`bg-white ${isLargeScreen ? 'rounded-[32px]' : 'rounded-t-[40px]'} p-8 pb-12 shadow-2xl relative`}
+          style={{ width: isDesktop ? 500 : '100%' }}
+          className={`bg-white ${isDesktop ? 'rounded-[32px]' : 'rounded-t-[40px]'} p-8 shadow-2xl relative`}
         >
-          <View className="items-center mb-6">
-            <View className="w-16 h-16 bg-indigo-50 rounded-full items-center justify-center mb-4">
+          <View className="items-center mb-6 pt-4">
+            <View className="w-16 h-16 bg-indigo-50 rounded-2xl items-center justify-center mb-6">
               <Icon name="doc.badge.plus" size={32} color="#6366f1" />
             </View>
-            <Text className="text-2xl font-bold text-slate-900 text-center">Complete Your Profile</Text>
-            <Text className="text-slate-500 text-center mt-2 px-4">
+            <Text className="text-2xl font-black text-slate-900 text-center tracking-tight">Complete AI Profile</Text>
+            <Text className="text-slate-500 text-center mt-2 px-4 font-medium">
               {forceMode
-                ? "Profile completion is required to apply for jobs. Please upload your resume to continue."
-                : "Upload your resume to automatically extract key details and start applying instantly."}
+                ? "Profile completion is required. Upload your resume to unlock agent applications."
+                : "Upload your resume to automatically extract key details and target roles instantly."}
             </Text>
           </View>
 
@@ -110,7 +102,7 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
           <TouchableOpacity
             onPress={handlePickDocument}
             disabled={uploading}
-            className="bg-indigo-600 py-5 rounded-[20px] flex-row items-center justify-center shadow-lg shadow-indigo-200"
+            className="bg-indigo-600 py-5 rounded-2xl flex-row items-center justify-center shadow-lg shadow-indigo-100"
           >
             {uploading ? (
               <ActivityIndicator color="white" />
@@ -122,24 +114,23 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
             )}
           </TouchableOpacity>
 
-          {!forceMode && (
-            <TouchableOpacity
-              onPress={onClose}
-              className="mt-4 py-4 items-center"
-            >
-              <Text className="text-slate-400 font-bold text-xs uppercase tracking-widest underline">Skip for now</Text>
-            </TouchableOpacity>
-          )}
+          <View className="mt-6 gap-2">
+            {!forceMode && (
+              <TouchableOpacity onPress={onClose} className="py-3 items-center">
+                <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Skip for now</Text>
+              </TouchableOpacity>
+            )}
 
-          <TouchableOpacity
-            onPress={() => {
-              onClose();
-              router.push('/job-form');
-            }}
-            className="mt-2 py-4 items-center"
-          >
-            <Text className="text-slate-400 font-bold text-xs uppercase tracking-widest">Or fill details manually</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                onClose();
+                router.push('/job-form');
+              }}
+              className="py-3 items-center bg-slate-50 rounded-xl"
+            >
+              <Text className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Or fill details manually</Text>
+            </TouchableOpacity>
+          </View>
 
           {!forceMode && (
             <TouchableOpacity

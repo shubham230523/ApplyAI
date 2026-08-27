@@ -36,6 +36,8 @@ const iconMap: Record<string, any> = {
   'square.and.arrow.up': 'share-outline',
   'cpu.fill': 'hardware-chip',
   'link': 'link',
+  'line.3.horizontal': 'menu',
+  'person.circle': 'person-circle',
 };
 
 export const Icon: React.FC<IconProps> = ({ name, size = 24, color = '#000', className }) => {
