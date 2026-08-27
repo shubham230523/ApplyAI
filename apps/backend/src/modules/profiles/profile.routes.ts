@@ -1,17 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import multipart from '@fastify/multipart';
 import { getProfile, updateProfile, getOrCreateUser, getRecruiterProfile, updateRecruiterProfile } from './profile.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
 import { supabase } from '../../lib/supabase.js';
 import { randomUUID } from 'crypto';
 
 export async function profileRoutes(fastify: FastifyInstance) {
-  fastify.register(multipart, {
-    limits: {
-      fileSize: 2 * 1024 * 1024, // 2MB for profile pics
-    },
-  });
-
   fastify.get(
     '',
     {
@@ -44,27 +37,43 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const data = await request.file();
-      if (!data) {
-        return reply.status(400).send({ error: 'No image uploaded' });
-      }
-
-      const userId = request.user.sub;
-      const fileExt = data.filename.split('.').pop();
-      const fileName = `${userId}/${randomUUID()}.${fileExt}`;
-
       try {
+        const data = await request.file();
+        if (!data) {
+          return reply.status(400).send({ error: 'No image uploaded' });
+        }
+
+        const userId = request.user.sub;
+        console.log(`Uploading profile image for user: ${userId}, file: ${data.filename}`);
+
+        const fileExt = data.filename.split('.').pop() || 'jpg';
+        const fileName = `${userId}/${randomUUID()}.${fileExt}`;
+
         const buffer = await data.toBuffer();
+        console.log(`Buffer created, size: ${buffer.length} bytes`);
+
+        // Detect correct mimetype
+        let contentType = data.mimetype;
+        if (contentType === 'text/plain' || !contentType) {
+          if (data.filename.toLowerCase().endsWith('.jpg') || data.filename.toLowerCase().endsWith('.jpeg')) {
+            contentType = 'image/jpeg';
+          } else if (data.filename.toLowerCase().endsWith('.png')) {
+            contentType = 'image/png';
+          }
+        }
+
         const { error: uploadError } = await supabase.storage
           .from('profile_image')
           .upload(fileName, buffer, {
-            contentType: data.mimetype,
+            contentType: contentType,
             upsert: true
           });
 
         if (uploadError) {
+          console.error('Supabase upload error:', uploadError);
           // Try to create bucket if it doesn't exist
           if ((uploadError as any).code === 'NoSuchBucket' || uploadError.message?.includes('not found')) {
+            console.log('Creating profile_image bucket...');
             await supabase.storage.createBucket('profile_image', { public: true });
             const { error: retryError } = await supabase.storage
               .from('profile_image')
@@ -72,13 +81,17 @@ export async function profileRoutes(fastify: FastifyInstance) {
                 contentType: data.mimetype,
                 upsert: true
               });
-            if (retryError) throw retryError;
+            if (retryError) {
+              console.error('Retry upload error:', retryError);
+              throw retryError;
+            }
           } else {
             throw uploadError;
           }
         }
 
         const { data: { publicUrl } } = supabase.storage.from('profile_image').getPublicUrl(fileName);
+        console.log(`Image uploaded successfully: ${publicUrl}`);
 
         // Update profile with new image URL
         const dbUser = await getOrCreateUser(request.user.sub, request.user.email);
@@ -87,7 +100,10 @@ export async function profileRoutes(fastify: FastifyInstance) {
         return { imageUrl: publicUrl };
       } catch (err: any) {
         console.error('Profile image upload error:', err);
-        return reply.status(500).send({ error: err.message || 'Failed to upload image' });
+        return reply.status(500).send({
+          error: 'Failed to upload image',
+          message: err.message
+        });
       }
     }
   );

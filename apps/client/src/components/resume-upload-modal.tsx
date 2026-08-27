@@ -58,11 +58,16 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       }
 
       const { extractedData } = await response.json();
-      onClose();
+
+      // Navigate first, then close to ensure the modal state doesn't interfere
       router.push({
         pathname: '/job-form',
         params: { data: JSON.stringify(extractedData) }
       });
+
+      setTimeout(() => {
+        onClose();
+      }, 100);
     } catch (err: any) {
       console.error('Upload error:', err);
       setError(err.message || 'Something went wrong during upload.');

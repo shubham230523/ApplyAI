@@ -29,18 +29,20 @@ function RootLayoutNav() {
     const inRecruiterGroup = segments[0] === '(recruiter)';
     const inCandidateGroup = segments[0] === '(tabs)';
     const isAtSelectionScreen = segments.length === 0 || (segments.length === 1 && segments[0] === 'index');
+    const isPublicRoute = segments[0] === 'job-form' || segments[0] === 'job';
 
     if (!session) {
-      if (!inAuthGroup && !isAtSelectionScreen) {
+      if (!inAuthGroup && !isAtSelectionScreen && !isPublicRoute) {
          router.replace('/');
       }
     } else {
       if (role === 'recruiter') {
-        if (!inRecruiterGroup || isAtSelectionScreen) {
+        if (!inRecruiterGroup && !isPublicRoute && !isAtSelectionScreen) {
           router.replace('/workspace');
         }
       } else {
-        if (!inCandidateGroup || isAtSelectionScreen) {
+        // Allow candidates to access (tabs) group AND the job-form/job details
+        if (!inCandidateGroup && !isPublicRoute && !isAtSelectionScreen) {
           router.replace('/assistant');
         }
       }

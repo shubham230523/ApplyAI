@@ -101,9 +101,8 @@ export default function TabsLayout() {
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+      allowsEditing: false,
+      quality: 1,
     });
     if (!result.canceled) uploadImage(result.assets[0]);
   };
@@ -116,7 +115,16 @@ export default function TabsLayout() {
       // Use fetch to get blob for compatibility with Expo's new fetch implementation
       const response = await fetch(asset.uri);
       const blob = await response.blob();
-      formData.append('file', blob, 'profile.jpg');
+
+      // Detect mimetype: priority to blob.type, then asset.mimeType, then URI extension
+      let mimeType = blob.type;
+      if (!mimeType || mimeType === 'text/plain' || mimeType === 'application/octet-stream') {
+        mimeType = asset.mimeType || (asset.uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+      }
+
+      const fileExt = mimeType.includes('png') ? 'png' : 'jpg';
+      const imageBlob = new Blob([blob], { type: mimeType });
+      formData.append('file', imageBlob, `profile.${fileExt}`);
 
       const uploadResponse = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',
@@ -159,8 +167,13 @@ export default function TabsLayout() {
 
       const data = await uploadResponse.json();
       if (uploadResponse.ok) {
-        setRightDrawerOpen(false);
+        // Navigate first
         router.push({ pathname: '/job-form', params: { data: JSON.stringify(data.extractedData) } });
+
+        // Then close drawer
+        setTimeout(() => {
+          setRightDrawerOpen(false);
+        }, 100);
       } else {
         const fullError = data.message ? `${data.error}: ${data.message}` : (data.error || 'Upload failed');
         Alert.alert('Upload Error', fullError);

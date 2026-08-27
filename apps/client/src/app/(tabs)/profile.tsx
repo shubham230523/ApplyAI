@@ -41,9 +41,8 @@ export default function ProfileScreen() {
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+      allowsEditing: false,
+      quality: 1,
     });
 
     if (!result.canceled) {
@@ -59,7 +58,16 @@ export default function ProfileScreen() {
       // Use fetch to get blob for compatibility with Expo's new fetch implementation
       const response = await fetch(asset.uri);
       const blob = await response.blob();
-      formData.append('file', blob, 'profile.jpg');
+
+      // Detect mimetype: priority to blob.type, then asset.mimeType, then URI extension
+      let mimeType = blob.type;
+      if (!mimeType || mimeType === 'text/plain' || mimeType === 'application/octet-stream') {
+        mimeType = asset.mimeType || (asset.uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+      }
+
+      const fileExt = mimeType.includes('png') ? 'png' : 'jpg';
+      const imageBlob = new Blob([blob], { type: mimeType });
+      formData.append('file', imageBlob, `profile.${fileExt}`);
 
       const uploadResponse = await fetch(`${apiUrl}/api/profile/image`, {
         method: 'POST',

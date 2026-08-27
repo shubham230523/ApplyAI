@@ -4,6 +4,7 @@ dotenv.config();
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { profileRoutes } from './modules/profiles/profile.routes.js';
@@ -19,6 +20,12 @@ const fastify = Fastify({
 async function main() {
   try {
     await fastify.register(cors, { origin: '*' });
+
+    await fastify.register(multipart, {
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
+    });
 
     const secret = process.env.SUPABASE_JWT_SECRET;
 

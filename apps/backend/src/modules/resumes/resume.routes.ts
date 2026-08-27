@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify';
-import multipart from '@fastify/multipart';
 import { ResumeService } from './resume.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
 import { getOrCreateUser } from '../profiles/profile.service.js';
@@ -7,13 +6,6 @@ import { getOrCreateUser } from '../profiles/profile.service.js';
 const resumeService = new ResumeService();
 
 export async function resumeRoutes(fastify: FastifyInstance) {
-  // Register multipart with a file size limit (e.g., 5MB)
-  fastify.register(multipart, {
-    limits: {
-      fileSize: 5 * 1024 * 1024,
-    },
-  });
-
   fastify.post('/upload', { preHandler: [authenticate] }, async (request, reply) => {
     const data = await request.file();
     if (!data) {
