@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   Platform,
 } from 'react-native';
+import { Icon } from '@/components/ui/icon';
 import { JobCard } from '@/components/job-card';
 import { JobFeed } from '@/components/job-feed';
 import { ResumeUploadModal } from '@/components/resume-upload-modal';
@@ -50,22 +51,44 @@ export default function AssistantScreen() {
   const [applying, setApplying] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [isProfileMissing, setIsProfileMissing] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Check if profile exists
-    const checkProfile = async () => {
+    // Check if profile exists and get applied jobs
+    const init = async () => {
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const response = await fetch(`${apiUrl}/api/profile`);
-        if (response.status === 404 || (await response.json()) === null) {
+        const [profileRes, appliedRes] = await Promise.all([
+          fetch(`${apiUrl}/api/profile`),
+          fetch(`${apiUrl}/api/applications/ids`)
+        ]);
+
+        if (profileRes.status === 404) {
            setIsProfileMissing(true);
            setShowUpload(true);
+        } else {
+           const data = await profileRes.json();
+           if (data === null) {
+             setIsProfileMissing(true);
+             setShowUpload(true);
+           } else {
+             setProfile(data);
+             if (!data.hasResume) setShowUpload(true);
+           }
+        }
+
+        if (appliedRes.ok) {
+           const ids = await appliedRes.json();
+           if (Array.isArray(ids)) {
+             setAppliedJobIds(new Set(ids));
+           }
         }
       } catch (e) {
-        // Silent fail or handle error
+        console.error('Init error:', e);
       }
     };
-    checkProfile();
+    init();
   }, []);
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -193,12 +216,16 @@ export default function AssistantScreen() {
                   <Text className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Context Aware</Text>
                 </View>
               </View>
-              <TouchableOpacity className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shadow-sm">
-                <Image
-                  source={{ uri: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Agent' }}
-                  style={{ width: '100%', height: '100%' }}
-                  contentFit="cover"
-                />
+              <TouchableOpacity className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shadow-sm bg-indigo-50 items-center justify-center">
+                {profile?.profileImageUrl ? (
+                  <Image
+                    source={{ uri: profile.profileImageUrl }}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Icon name="person.fill" size={14} color="#6366f1" />
+                )}
               </TouchableOpacity>
             </View>
 
@@ -230,6 +257,7 @@ export default function AssistantScreen() {
                             job={job}
                             selected={selectedJobIds.has(job.id)}
                             onToggle={handleToggleJob}
+                            applied={appliedJobIds.has(job.id)}
                           />
                         ))}
                       </View>
@@ -311,6 +339,7 @@ export default function AssistantScreen() {
               loading={loading}
               selectedJobIds={selectedJobIds}
               onToggleJob={handleToggleJob}
+              appliedJobIds={appliedJobIds}
             />
           </View>
         )}

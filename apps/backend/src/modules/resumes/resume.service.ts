@@ -131,7 +131,7 @@ export class ResumeService {
 
     // 1. Reset other main resumes for this user
     await db.update(resumes)
-      .set({ isMain: false })
+      .set({ isMain: false, updatedAt: new Date() })
       .where(eq(resumes.userId, userId));
 
     // 2. Insert the new resume as the main one

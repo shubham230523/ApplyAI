@@ -14,11 +14,13 @@ interface JobCardProps {
   selected?: boolean;
   onToggle?: (id: string) => void;
   matchScore?: number;
+  applied?: boolean;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, matchScore = 85 }) => {
+export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, matchScore = 85, applied = false }) => {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+
 
   const toggleExpand = (e: any) => {
     e.stopPropagation();
@@ -55,15 +57,17 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
           <View className="mr-3 mt-1 items-center">
             <TouchableOpacity
               onPress={(e) => {
+                if (applied) return;
                 e.stopPropagation();
                 onToggle?.(job.id);
               }}
+              disabled={applied}
               className="mb-3 items-center justify-center"
             >
               <Icon
-                name={selected ? "checkmark.circle.fill" : "circle"}
+                name={applied ? "checkmark.seal.fill" : (selected ? "checkmark.circle.fill" : "circle")}
                 size={22}
-                color={selected ? "#6366f1" : "#cbd5e1"}
+                color={applied ? "#10b981" : (selected ? "#6366f1" : "#cbd5e1")}
               />
             </TouchableOpacity>
 
@@ -77,7 +81,14 @@ export const JobCard: React.FC<JobCardProps> = ({ job, selected, onToggle, match
 
           <View className="flex-1">
             {/* Lines 1-2: Job Title */}
-            <Text className="text-[14px] font-bold text-slate-900 tracking-tight leading-snug" style={{ fontFamily: 'Outfit' }} numberOfLines={2}>{job.title}</Text>
+            <View className="flex-row justify-between items-start">
+              <Text className="text-[14px] font-bold text-slate-900 tracking-tight leading-snug flex-1 mr-2" style={{ fontFamily: 'Outfit' }} numberOfLines={2}>{job.title}</Text>
+              {applied && (
+                <View className="bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
+                  <Text className="text-emerald-600 text-[8px] font-black uppercase">APPLIED</Text>
+                </View>
+              )}
+            </View>
 
             {/* Line 3: Company Name */}
             <Text className="text-[12px] font-semibold text-slate-400 mt-1" numberOfLines={1}>{job.companyName}</Text>

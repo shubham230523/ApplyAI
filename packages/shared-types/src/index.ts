@@ -49,7 +49,10 @@ export interface CandidateProfile {
   achievements: string[];
   preferredLocations: string[];
   preferredSalary?: number;
+  address?: string;
+  profileImageUrl?: string;
   noticePeriod?: string;
+  hasResume?: boolean;
 }
 
 export interface JobSearchParams {
@@ -80,4 +83,22 @@ export interface OrchestratorResponse {
   params: JobSearchParams;
   jobs: Job[];
   message: string;
+}
+
+export interface Application {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  companyName: string;
+  companyLogoUrl?: string;
+  location?: string;
+  status: string;
+  appliedAt: Date | string;
+}
+
+export interface ApplicationDetail extends Application {
+  aiCoverLetter?: string;
+  aiAnswers?: any;
+  resumeId?: string;
+  jobDescription?: string;
 }

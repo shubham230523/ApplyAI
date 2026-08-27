@@ -1,0 +1,6 @@
+- [ ] Add `Application` types to `shared-types` and rebuild
+- [ ] Implement `getApplicationById` in backend service
+- [ ] Add detail route in backend applications controller
+- [ ] Update `applications.tsx` list UI and fetch logic
+- [ ] Create `applications/[id].tsx` detail screen in client
+- [ ] Verify end-to-end flow

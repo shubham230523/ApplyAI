@@ -17,6 +17,8 @@ export const profiles = pgTable('profiles', {
   skills: text('skills').array(),
   preferredLocations: text('preferred_locations').array(),
   preferredSalary: integer('preferred_salary'),
+  address: text('address'),
+  profileImageUrl: text('profile_image_url'),
   noticePeriod: text('notice_period'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

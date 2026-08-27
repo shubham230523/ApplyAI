@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Linking, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/icon';
 import { Job } from '@applyai/shared-types';
@@ -12,24 +12,36 @@ export default function JobDetailsScreen() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForceUpload, setShowForceUpload] = useState(false);
+  const [isApplied, setIsApplied] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
-    const fetchJob = async () => {
+    const fetchJobAndStatus = async () => {
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const response = await fetch(`${apiUrl}/api/jobs/${id}`);
-        if (!response.ok) {
-           throw new Error(`Server returned ${response.status}`);
+        const [jobRes, appsRes] = await Promise.all([
+          fetch(`${apiUrl}/api/jobs/${id}`),
+          fetch(`${apiUrl}/api/applications/ids`)
+        ]);
+
+        if (jobRes.ok) {
+           const jobData = await jobRes.json();
+           setJob(jobData);
         }
-        const data = await response.json();
-        setJob(data);
+
+        if (appsRes.ok) {
+           const appliedIds = await appsRes.json();
+           if (Array.isArray(appliedIds) && appliedIds.includes(id)) {
+              setIsApplied(true);
+           }
+        }
       } catch (error) {
         console.error('Fetch error in Job Details:', error);
       } finally {
         setLoading(false);
       }
     };
-    if (id) fetchJob();
+    if (id) fetchJobAndStatus();
   }, [id]);
 
   const formatSalary = (min: number | string | undefined, max: number | string | undefined) => {
@@ -56,35 +68,50 @@ export default function JobDetailsScreen() {
   };
 
   const handleApply = async () => {
+    if (isApplied || applying) return;
+
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    setApplying(true);
 
     try {
-      // 1. Check if profile exists and is complete before applying
+      // 1. Check if profile exists and has a resume
       const response = await fetch(`${apiUrl}/api/profile`);
       if (!response.ok) {
         setShowForceUpload(true);
+        setApplying(false);
         return;
       }
 
       const profile = await response.json();
 
-      // Check if profile is substantially complete
-      if (!profile || !profile.name || !profile.email) {
+      // Ensure profile is complete AND has a resume uploaded
+      if (!profile || !profile.name || !profile.email || !profile.hasResume) {
         setShowForceUpload(true);
+        setApplying(false);
         return;
       }
 
-      // 2. If profile exists and is complete, proceed to application URL
-      if (job?.applyUrl) {
-        console.log('Direct apply to:', job.applyUrl);
-        Linking.openURL(job.applyUrl);
+      // 2. Register the application in our system
+      console.log('Registering application for job:', job?.id);
+
+      const applyResponse = await fetch(`${apiUrl}/api/applications/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: job?.id })
+      });
+
+      if (applyResponse.ok) {
+        setIsApplied(true);
+        Alert.alert('Success', 'Application submitted successfully to ' + job?.companyName);
       } else {
-        alert('Application URL not found for this job.');
+        const errData = await applyResponse.json();
+        Alert.alert('Tracking Error', errData.error || 'Failed to register your application.');
       }
     } catch (e) {
       console.error('Apply error:', e);
-      // If profile check fails, better safe than sorry: show upload
-      setShowForceUpload(true);
+      Alert.alert('Connection Error', 'Could not sync with local database.');
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -269,9 +296,16 @@ export default function JobDetailsScreen() {
         <View className="max-w-4xl mx-auto w-full items-center">
           <TouchableOpacity
             onPress={handleApply}
-            className="bg-indigo-600 px-10 py-3.5 rounded-xl items-center shadow-xl active:scale-[0.98]"
+            disabled={isApplied || applying}
+            className={`${isApplied ? 'bg-slate-400' : 'bg-indigo-600'} px-10 py-3.5 rounded-xl items-center shadow-xl active:scale-[0.98] w-full lg:w-auto`}
           >
-            <Text className="text-white font-bold text-base uppercase tracking-widest">Apply Now</Text>
+            {applying ? (
+               <ActivityIndicator color="white" />
+            ) : (
+               <Text className="text-white font-bold text-base uppercase tracking-widest">
+                 {isApplied ? 'Applied' : 'Apply Now'}
+               </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

@@ -9,10 +9,12 @@ interface JobFeedProps {
   loading: boolean;
   selectedJobIds: Set<string>;
   onToggleJob: (id: string) => void;
+  appliedJobIds?: Set<string>;
 }
 
-export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds, onToggleJob }) => {
+export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds, onToggleJob, appliedJobIds = new Set() }) => {
   return (
+
     <View
       className="flex-1 bg-slate-50/20 mesh-gradient h-full overflow-hidden"
       style={Platform.OS === 'web' ? { height: '100%' } : { flex: 1 }}
@@ -23,11 +25,6 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
           <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
             {jobs.length} Priority Nodes Found
           </Text>
-        </View>
-        <View className="flex-row gap-3">
-           <TouchableOpacity className="bg-slate-900 px-5 py-2 rounded-xl shadow-lg active:scale-95 transition-all">
-             <Text className="text-[10px] font-black text-white uppercase tracking-widest">Logic Match</Text>
-           </TouchableOpacity>
         </View>
       </View>
 
@@ -49,6 +46,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
                   job={job}
                   selected={selectedJobIds.has(job.id)}
                   onToggle={onToggleJob}
+                  applied={appliedJobIds.has(job.id)}
                 />
               </View>
             ))}

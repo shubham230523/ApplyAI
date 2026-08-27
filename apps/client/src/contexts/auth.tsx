@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       expires_in: 3600,
       token_type: 'bearer',
       user: {
-        id: 'test-user-id',
+        id: 'd83c4b7a-9f1e-4b7a-9f1e-d83c4b7a9f1e',
         email: 'test@example.com',
         app_metadata: {},
         user_metadata: {},
@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } as any,
     });
     setUser({
-      id: 'test-user-id',
+      id: 'd83c4b7a-9f1e-4b7a-9f1e-d83c4b7a9f1e',
       email: 'test@example.com',
     } as any);
     setLoading(false);

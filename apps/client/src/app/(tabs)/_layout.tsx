@@ -63,13 +63,6 @@ export default function TabsLayout() {
               active={pathname.includes('/profile')}
             />
           </View>
-
-          <View className="pt-6 border-t border-slate-50">
-            <TouchableOpacity className="flex-row items-center px-3 py-2 rounded-lg bg-slate-900 shadow-lg active:scale-95 transition-all">
-              <Icon name="plus.circle.fill" size={13} color="white" />
-              <Text className="ml-2 text-white font-bold text-[9px] uppercase tracking-widest">Update AI CV</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Content */}
