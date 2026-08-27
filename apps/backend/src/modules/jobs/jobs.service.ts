@@ -43,6 +43,45 @@ export class JobsService {
     }
   }
 
+  async createJob(recruiterId: string, jobData: Partial<Job>): Promise<Job | null> {
+    if (!db) return null;
+    const id = randomUUID();
+    const now = new Date();
+
+    const [newJob] = await db.insert(jobs).values({
+      id,
+      title: jobData.title!,
+      description: jobData.description!,
+      companyName: jobData.companyName!,
+      location: jobData.location,
+      workplaceType: jobData.workplaceType,
+      employmentType: jobData.employmentType,
+      experienceLevel: jobData.experienceLevel,
+      salaryCurrency: jobData.salaryCurrency,
+      salaryMin: jobData.salaryMin?.toString(),
+      salaryMax: jobData.salaryMax?.toString(),
+      salaryPeriod: jobData.salaryPeriod,
+      recruiterId,
+      isActive: true,
+      postedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    } as any).returning();
+
+    return newJob as any as Job;
+  }
+
+  async getJobsByRecruiter(recruiterId: string): Promise<Job[]> {
+    if (!db) return [];
+    try {
+      const result = await db.select().from(jobs).where(eq(jobs.recruiterId, recruiterId));
+      return result as any as Job[];
+    } catch (e) {
+      console.error('Error fetching jobs by recruiter:', e);
+      return [];
+    }
+  }
+
   private generateMockJobs(params: JobSearchParams): Job[] {
     const titles = [params.title || 'Software Engineer', 'Full Stack Developer', 'Backend Developer'];
     const location = params.location || 'Remote';

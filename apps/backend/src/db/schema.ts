@@ -68,6 +68,7 @@ export const jobs = pgTable('jobs', {
   salaryPeriod: text('salary_period'), // 'HOURLY', 'MONTHLY', 'YEARLY'
   applyUrl: text('apply_url'),
   contactEmail: text('contact_email'),
+  recruiterId: uuid('recruiter_id').references(() => recruiters.id),
   isActive: boolean('is_active').default(true),
   postedAt: timestamp('posted_at', { withTimezone: true }).defaultNow(),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
