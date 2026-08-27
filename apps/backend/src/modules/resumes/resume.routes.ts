@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
-import { ResumeService } from './resume.service';
-import { authenticate } from '../../common/auth.middleware';
-import { getOrCreateUser } from '../profiles/profile.service';
+import { ResumeService } from './resume.service.js';
+import { authenticate } from '../../common/auth.middleware.js';
+import { getOrCreateUser } from '../profiles/profile.service.js';
 
 const resumeService = new ResumeService();
 
@@ -20,8 +20,17 @@ export async function resumeRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
-    if (data.mimetype !== 'application/pdf') {
-      return reply.status(400).send({ error: 'Only PDF files are allowed' });
+    // Log the incoming mimetype for debugging
+    console.log(`Incoming file: ${data.filename}, mimetype: ${data.mimetype}`);
+
+    const allowedMimeTypes = ['application/pdf', 'application/x-pdf', 'application/octet-stream'];
+    const isPdfExtension = data.filename.toLowerCase().endsWith('.pdf');
+
+    if (!allowedMimeTypes.includes(data.mimetype) && !isPdfExtension) {
+      return reply.status(400).send({
+        error: 'Only PDF files are allowed',
+        message: `Received file of type ${data.mimetype}`
+      });
     }
 
     const userId = request.user.sub;

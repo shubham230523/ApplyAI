@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import multipart from '@fastify/multipart';
-import { getProfile, updateProfile, getOrCreateUser, getRecruiterProfile, updateRecruiterProfile } from './profile.service';
-import { authenticate } from '../../common/auth.middleware';
-import { supabase } from '../../lib/supabase';
+import { getProfile, updateProfile, getOrCreateUser, getRecruiterProfile, updateRecruiterProfile } from './profile.service.js';
+import { authenticate } from '../../common/auth.middleware.js';
+import { supabase } from '../../lib/supabase.js';
 import { randomUUID } from 'crypto';
 
 export async function profileRoutes(fastify: FastifyInstance) {

@@ -145,7 +145,10 @@ export default function TabsLayout() {
       // Use fetch to get blob for compatibility with Expo's new fetch implementation
       const response = await fetch(file.uri);
       const blob = await response.blob();
-      formData.append('file', blob, file.name);
+
+      // Ensure the blob is explicitly marked as a PDF
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      formData.append('file', pdfBlob, file.name);
 
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const uploadResponse = await fetch(`${apiUrl}/api/resume/upload`, {

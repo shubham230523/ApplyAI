@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.js';
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {

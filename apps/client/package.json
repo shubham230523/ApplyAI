@@ -49,11 +49,11 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8080",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "cross-env EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=true expo start --web --clear",
+    "android": "expo start --android --port 8080",
+    "ios": "expo start --ios --port 8080",
+    "web": "cross-env EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=true expo start --web --clear --port 8080",
     "build": "expo export -p web",
     "lint": "expo lint"
   },

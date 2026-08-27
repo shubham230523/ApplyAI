@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { AIService } from '../ai/ai.service';
-import { JobsService } from '../jobs/jobs.service';
+import { AIService } from '../ai/ai.service.js';
+import { JobsService } from '../jobs/jobs.service.js';
 
 const aiService = new AIService();
 
