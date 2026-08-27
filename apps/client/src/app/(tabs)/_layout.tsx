@@ -147,7 +147,11 @@ export default function TabsLayout() {
         formData.append('file', blob, file.name);
       } else {
         // @ts-ignore
-        formData.append('file', { uri: file.uri, name: file.name, type: 'application/pdf' });
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name,
+          type: 'application/pdf',
+        } as any);
       }
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${apiUrl}/api/resume/upload`, {
@@ -244,15 +248,15 @@ export default function TabsLayout() {
             activeOpacity={1}
             onPress={() => setLeftDrawerOpen(false)}
           />
-          <View className="w-72 bg-white h-full p-6 shadow-2xl" style={{ paddingTop: insets.top + 20 }}>
-             <View className="flex-row justify-between items-center mb-8">
-                <Text className={`font-black text-slate-900 tracking-tighter ${isMobile ? 'text-2xl' : 'text-xl'}`} style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
+          <View className="w-72 bg-white h-full p-8 shadow-2xl" style={{ paddingTop: insets.top + 32 }}>
+             <View className="flex-row justify-between items-center mb-12">
+                <Text className={`font-black text-slate-900 tracking-tighter ${isMobile ? 'text-3xl' : 'text-xl'}`} style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
                 <TouchableOpacity onPress={() => setLeftDrawerOpen(false)}>
-                  <Icon name="xmark" size={20} color="#64748b" />
+                  <Icon name="xmark" size={24} color="#64748b" />
                 </TouchableOpacity>
              </View>
 
-             <View className="flex-1">
+             <View className="flex-1 gap-4">
                 <SidebarItem
                   name="index"
                   icon="sparkles.fill"

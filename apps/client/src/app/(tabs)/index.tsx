@@ -207,7 +207,7 @@ export default function AssistantScreen() {
       ]);
     } finally {
       setLoading(false);
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      // Removed aggressive scrollToEnd to prevent jumping past job results
     }
   };
 
@@ -317,8 +317,8 @@ export default function AssistantScreen() {
 
             {/* Input Bar */}
             <View
-              className="px-5 py-6 bg-white/95 border-t border-slate-100 z-30"
-              style={{ paddingBottom: Math.max(24, insets.bottom + 8) }}
+              className="px-5 py-4 bg-white/95 border-t border-slate-100 z-30"
+              style={{ paddingBottom: Math.max(12, insets.bottom) }}
             >
               {selectedJobIds.size > 0 && (
                 <TouchableOpacity
