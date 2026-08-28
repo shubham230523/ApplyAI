@@ -44,7 +44,7 @@
       "typedRoutes": true,
       "reactCompiler": true,
       "baseUrl": "/ApplyAI",
-      "tsconfigPaths": true
+      "tsconfigPaths": false
     }
   }
 }

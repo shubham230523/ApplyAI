@@ -4,6 +4,15 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./apps/client/src/*"
+      ],
+      "@/assets/*": [
+        "./apps/client/assets/*"
+      ]
+    },
     "types": []
   },
   "extends": "expo/tsconfig.base"

@@ -28,7 +28,7 @@ config.resolver.sourceExts.push("mjs");
 
 // Handle hoisted expo/AppEntry.js in monorepos
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === '../../App') {
+  if (moduleName === '../../App' || moduleName === './App' || moduleName === './index') {
     return {
       filePath: path.resolve(projectRoot, "index.js"),
       type: "sourceFile",

@@ -42,9 +42,10 @@ export async function applicationRoutes(fastify: FastifyInstance) {
   fastify.get('/job/:jobId', { preHandler: [authenticate] }, async (request, reply) => {
     const { jobId } = request.params as { jobId: string };
     const { getOrCreateRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
+    const user = (request as any).user;
 
-    const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
-    const recruiter = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
+    const dbUser = await getOrCreateUser(user.sub, user.email, 'recruiter');
+    const recruiter = await getOrCreateRecruiterProfile(dbUser.id, user.email);
 
     if (!recruiter) {
       return reply.status(403).send({ error: 'Recruiter profile not found' });
@@ -60,9 +61,10 @@ export async function applicationRoutes(fastify: FastifyInstance) {
   fastify.get('/recruiter-detail/:id', { preHandler: [authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { getOrCreateRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
+    const user = (request as any).user;
 
-    const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
-    const recruiter = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
+    const dbUser = await getOrCreateUser(user.sub, user.email, 'recruiter');
+    const recruiter = await getOrCreateRecruiterProfile(dbUser.id, user.email);
 
     if (!recruiter) {
       return reply.status(403).send({ error: 'Recruiter profile not found' });
