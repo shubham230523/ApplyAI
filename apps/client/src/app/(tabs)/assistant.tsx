@@ -51,6 +51,7 @@ export default function AssistantScreen() {
     },
   ]);
   const [loading, setLoading] = useState(false);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
   const [applying, setApplying] = useState(false);
@@ -63,6 +64,7 @@ export default function AssistantScreen() {
     // Check if profile exists and get applied jobs
     const init = async () => {
       if (!session) return;
+      setRecommendationsLoading(true);
 
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
@@ -117,6 +119,8 @@ export default function AssistantScreen() {
         }
       } catch (e) {
         console.error('Init error:', e);
+      } finally {
+        setRecommendationsLoading(false);
       }
     };
     init();
@@ -126,7 +130,7 @@ export default function AssistantScreen() {
   const typingOpac = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    if (loading) {
+    if (loading || recommendationsLoading) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(typingOpac, { toValue: 1, duration: 500, useNativeDriver: true }),
@@ -136,7 +140,7 @@ export default function AssistantScreen() {
     } else {
       typingOpac.setValue(0.3);
     }
-  }, [loading]);
+  }, [loading, recommendationsLoading]);
 
   const handleToggleJob = (id: string) => {
     setSelectedJobIds((prev) => {
@@ -308,14 +312,16 @@ export default function AssistantScreen() {
                   </View>
                 ))}
 
-                {loading && (
+                {(loading || recommendationsLoading) && (
                   <View className="self-start bg-white border border-slate-200/60 px-8 py-5 rounded-[28px] rounded-bl-none flex-row items-center shadow-sm">
                     <Animated.View style={{ opacity: typingOpac }} className="flex-row gap-2">
                       <View className="w-2 h-2 bg-indigo-400 rounded-full" />
                       <View className="w-2 h-2 bg-indigo-500 rounded-full" />
                       <View className="w-2 h-2 bg-indigo-600 rounded-full" />
                     </Animated.View>
-                    <Text className="ml-4 text-[12px] font-bold text-slate-400 uppercase tracking-widest">Thinking...</Text>
+                    <Text className="ml-4 text-[12px] font-bold text-slate-400 uppercase tracking-widest">
+                      {recommendationsLoading ? "Discovering matches..." : "Thinking..."}
+                    </Text>
                   </View>
                 )}
 
@@ -382,7 +388,7 @@ export default function AssistantScreen() {
           <View className="flex-1 h-full overflow-hidden bg-[#fafaf9]">
             <JobFeed
               jobs={allJobs}
-              loading={loading}
+              loading={loading || recommendationsLoading}
               selectedJobIds={selectedJobIds}
               onToggleJob={handleToggleJob}
               appliedJobIds={appliedJobIds}

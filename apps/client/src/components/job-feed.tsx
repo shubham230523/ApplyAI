@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { Job } from '@applyai/shared-types';
 import { JobCard } from './job-card';
+import { JobCardSkeleton } from './job-card-skeleton';
 import { Icon } from '@/components/ui/Icon';
 
 interface JobFeedProps {
@@ -34,9 +35,12 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs, loading, selectedJobIds,
         showsVerticalScrollIndicator={true}
       >
         {loading && jobs.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-32">
-            <ActivityIndicator color="#0f172a" size="large" />
-            <Text className="text-slate-400 mt-6 font-bold uppercase tracking-[0.2em] text-[12px]">Agent Scouting Neural Mesh...</Text>
+          <View className="flex-row flex-wrap -mx-3">
+            {[1, 2, 3, 4].map((i) => (
+              <View key={i} className="w-full lg:w-1/2 p-3">
+                <JobCardSkeleton />
+              </View>
+            ))}
           </View>
         ) : jobs.length > 0 ? (
           <View className="flex-row flex-wrap -mx-3">
