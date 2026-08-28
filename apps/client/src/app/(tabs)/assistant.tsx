@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { JobCard } from '@/components/job-card';
 import { JobFeed } from '@/components/job-feed';
 import { ResumeUploadModal } from '@/components/resume-upload-modal';

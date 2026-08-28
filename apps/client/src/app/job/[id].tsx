@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Linking, Alert, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { Job } from '@applyai/shared-types';
 import { Image } from 'expo-image';
 import { ResumeUploadModal } from '@/components/resume-upload-modal';
+import { useAuth } from '@/contexts/auth';
 
 export default function JobDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -13,6 +14,7 @@ export default function JobDetailsScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
+  const { session } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,13 +22,25 @@ export default function JobDetailsScreen() {
   const [isApplied, setIsApplied] = useState(false);
   const [applying, setApplying] = useState(false);
 
+  // AI Features State
+  const [summary, setSummary] = useState<string | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [matchResult, setMatchResult] = useState<{ score: number; feedback: string } | null>(null);
+  const [loadingMatch, setLoadingMatch] = useState(true);
+
   useEffect(() => {
     const fetchJobAndStatus = async () => {
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const [jobRes, appsRes] = await Promise.all([
+        const [jobRes, appsRes, summaryRes, matchRes] = await Promise.all([
           fetch(`${apiUrl}/api/jobs/${id}`),
-          fetch(`${apiUrl}/api/applications/ids`)
+          fetch(`${apiUrl}/api/applications/ids`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          }),
+          fetch(`${apiUrl}/api/jobs/${id}/summary`),
+          fetch(`${apiUrl}/api/jobs/${id}/match`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          })
         ]);
 
         if (jobRes.ok) {
@@ -40,14 +54,28 @@ export default function JobDetailsScreen() {
               setIsApplied(true);
            }
         }
+
+        if (summaryRes.ok) {
+           const { summary } = await summaryRes.json();
+           setSummary(summary);
+        }
+        setLoadingSummary(false);
+
+        if (matchRes.ok) {
+           const matchData = await matchRes.json();
+           setMatchResult(matchData);
+        }
+        setLoadingMatch(false);
       } catch (error) {
         console.error('Fetch error in Job Details:', error);
+        setLoadingSummary(false);
+        setLoadingMatch(false);
       } finally {
         setLoading(false);
       }
     };
     if (id) fetchJobAndStatus();
-  }, [id]);
+  }, [id, session]);
 
   const formatSalary = (min: number | string | undefined, max: number | string | undefined) => {
     if (!min && !max) return 'Not Disclosed';
@@ -79,7 +107,9 @@ export default function JobDetailsScreen() {
     setApplying(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/profile`);
+      const response = await fetch(`${apiUrl}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
       if (!response.ok) {
         setShowForceUpload(true);
         setApplying(false);
@@ -93,7 +123,10 @@ export default function JobDetailsScreen() {
       }
       const applyResponse = await fetch(`${apiUrl}/api/applications/apply`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({ jobId: job?.id })
       });
       if (applyResponse.ok) {
@@ -160,8 +193,19 @@ export default function JobDetailsScreen() {
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
         <View className="w-full max-w-3xl mx-auto px-6 pt-10">
-          <View className="bg-indigo-50 self-start px-3 py-1 rounded-lg border border-indigo-100 mb-6">
-            <Text className={`${isMobile ? 'text-[10px]' : 'text-[9px]'} text-indigo-700 font-bold tracking-widest uppercase`}>Strategic Match</Text>
+          <View className="flex-row items-center mb-6">
+            <View className={`${loadingMatch ? 'bg-slate-100' : (matchResult?.score || 0) >= 80 ? 'bg-emerald-50' : 'bg-indigo-50'} px-3 py-1 rounded-lg border ${loadingMatch ? 'border-slate-200' : (matchResult?.score || 0) >= 80 ? 'border-emerald-100' : 'border-indigo-100'} flex-row items-center`}>
+              {loadingMatch ? (
+                <ActivityIndicator size="small" color="#94a3b8" />
+              ) : (
+                <>
+                  <Icon name="sparkles.fill" size={10} color={(matchResult?.score || 0) >= 80 ? '#059669' : '#6366f1'} />
+                  <Text className={`${isMobile ? 'text-[10px]' : 'text-[9px]'} ${(matchResult?.score || 0) >= 80 ? 'text-emerald-700' : 'text-indigo-700'} font-black tracking-widest uppercase ml-1.5`}>
+                    {matchResult?.score || 0}% Strategic Match
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
 
           <Text className={`${isMobile ? 'text-3xl' : 'text-2xl'} font-bold text-slate-900 leading-tight mb-6`}>
@@ -216,27 +260,48 @@ export default function JobDetailsScreen() {
             </View>
           </View>
 
-          {/* Description */}
+          {/* AI Summary Section */}
+          <View className="mb-10 bg-white p-8 rounded-[32px] border border-indigo-100 shadow-sm shadow-indigo-50/50">
+            <View className="flex-row items-center mb-6">
+              <Icon name="sparkles" size={18} color="#6366f1" />
+              <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900 ml-3`}>AI Key Insights</Text>
+            </View>
+            {loadingSummary ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator color="#6366f1" />
+                <Text className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-4">Generating Summary...</Text>
+              </View>
+            ) : (
+              <Text className={`${isMobile ? 'text-lg' : 'text-base'} text-slate-600 leading-relaxed italic`}>
+                {summary || "No summary available for this role."}
+              </Text>
+            )}
+          </View>
+
+          {/* AI Match Result */}
+          <View className="bg-indigo-950 p-8 md:p-10 rounded-[32px] shadow-xl mb-12">
+            <View className="flex-row items-center mb-6">
+              <View className="bg-indigo-400 w-2.5 h-2.5 rounded-full mr-3" />
+              <Text className="text-indigo-300 font-bold uppercase text-[10px] tracking-widest">Agent Strategic Analysis</Text>
+            </View>
+            {loadingMatch ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white text-lg md:text-xl font-bold leading-snug">
+                {matchResult?.feedback || `This role at ${job.companyName} represents a logical progression for your career trajectory.`}
+              </Text>
+            )}
+          </View>
+
+          {/* Original Description */}
           <View className="mt-4 border-t border-slate-200/60 pt-10 mb-10">
             <View className="flex-row items-center mb-6">
               <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
                 <Icon name="briefcase.fill" size={16} color="#6366f1" />
               </View>
-              <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900`}>The Opportunity</Text>
+              <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900`}>Full Opportunity Details</Text>
             </View>
             <Text className={`${isMobile ? 'text-lg' : 'text-base'} text-slate-600 leading-relaxed`}>{job.description}</Text>
-          </View>
-
-          {/* AI Insight */}
-          <View className="bg-indigo-950 p-8 md:p-10 rounded-[32px] shadow-xl">
-            <View className="flex-row items-center mb-6">
-              <View className="bg-indigo-400 w-2.5 h-2.5 rounded-full mr-3" />
-              <Text className="text-indigo-300 font-bold uppercase text-[10px] tracking-widest">Agent Strategic Analysis</Text>
-            </View>
-            <Text className="text-white text-lg md:text-xl font-bold leading-snug">
-              This role at {job.companyName} represents a logical progression for your career trajectory.
-              The {job.title} position leverages your full technical arsenal with high efficiency.
-            </Text>
           </View>
         </View>
       </ScrollView>

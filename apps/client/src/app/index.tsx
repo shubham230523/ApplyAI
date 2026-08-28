@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RoleSelectionScreen() {

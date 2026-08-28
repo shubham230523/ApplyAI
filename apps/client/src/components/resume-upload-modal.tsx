@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity, ActivityIndicator, Platform, useWindowDimensions } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-import { Icon } from './ui/icon';
+import { Icon } from './ui/Icon';
 import { useAuth } from '@/contexts/auth';
 
 interface ResumeUploadModalProps {

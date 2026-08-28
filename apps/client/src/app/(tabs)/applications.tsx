@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { Application } from '@applyai/shared-types';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { useAuth } from '@/contexts/auth';
 
 export default function ApplicationsScreen() {
+  const { session } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -15,9 +17,12 @@ export default function ApplicationsScreen() {
   const isMobile = width < 768;
 
   const fetchApplications = async () => {
+    if (!session) return;
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
     try {
-      const response = await fetch(`${apiUrl}/api/applications`);
+      const response = await fetch(`${apiUrl}/api/applications`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       // Ensure we have an array
@@ -33,7 +38,7 @@ export default function ApplicationsScreen() {
 
   useEffect(() => {
     fetchApplications();
-  }, []);
+  }, [session]);
 
   const onRefresh = () => {
     setRefreshing(true);

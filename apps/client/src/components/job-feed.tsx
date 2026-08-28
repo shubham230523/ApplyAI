@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { Job } from '@applyai/shared-types';
 import { JobCard } from './job-card';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 
 interface JobFeedProps {
   jobs: Job[];

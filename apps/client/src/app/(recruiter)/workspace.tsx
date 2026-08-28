@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
 import { useAuth } from '@/contexts/auth';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { useRouter } from 'expo-router';
 
 export default function RecruiterDashboard() {

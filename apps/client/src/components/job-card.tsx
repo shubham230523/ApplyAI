@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, LayoutAnimation, Platform, UIManager } fr
 import { Job } from '@applyai/shared-types';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { Icon } from './ui/icon';
+import { Icon } from './ui/Icon';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);

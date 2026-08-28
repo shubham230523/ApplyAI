@@ -70,7 +70,7 @@ export class AIService {
 
     try {
       const result = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: finalPrompt
       });
 
@@ -322,8 +322,51 @@ export class AIService {
     }
   }
 
-  async calculateMatchScore(jd: string, profile: CandidateProfile): Promise<{ score: number; feedback: string }> {
-    return { score: 85, feedback: "Good match." };
+  async generateJobSummary(jobDescription: string): Promise<string> {
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a career assistant. Summarize the provided job description into 3-4 concise, high-impact bullet points. Focus on key responsibilities and unique requirements.'
+      },
+      { role: 'user', content: jobDescription }
+    ];
+
+    try {
+      return await this.callAI(messages);
+    } catch (e) {
+        console.error(e)
+      return "Unable to generate summary at this time.";
+    }
+  }
+
+  async calculateMatchScore(job: Job, profile: CandidateProfile): Promise<{ score: number; feedback: string }> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a recruitment AI. Compare the candidate's profile against the job description.
+        Calculate a match score from 0 to 100.
+        Provide a concise, 1-2 sentence strategic feedback explanation for the score.`
+      },
+      {
+        role: 'user',
+        content: `JOB: ${job.title} at ${job.companyName}\nDESCRIPTION: ${job.description}\n\nCANDIDATE: ${profile.name}\nSKILLS: ${profile.skills.join(', ')}\nEXPERIENCE: ${profile.yearsExperience} years\nWORK HISTORY: ${JSON.stringify(profile.workExperience)}`
+      }
+    ];
+
+    const scoreSchema = {
+      type: "object",
+      properties: {
+        score: { type: "number" },
+        feedback: { type: "string" }
+      },
+      required: ["score", "feedback"]
+    };
+
+    try {
+      return await this.callAI(messages, scoreSchema);
+    } catch (e) {
+      return { score: 70, feedback: "A basic match based on your primary skills." };
+    }
   }
 
   async generateCoverLetter(profile: CandidateProfile, jd: string): Promise<string> {

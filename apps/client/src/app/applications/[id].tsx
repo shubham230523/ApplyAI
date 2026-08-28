@@ -1,22 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { ApplicationDetail } from '@applyai/shared-types';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/auth';
 
 export default function ApplicationDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { session } = useAuth();
   const [application, setApplication] = useState<ApplicationDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchApplication = async () => {
+      if (!session) return;
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const response = await fetch(`${apiUrl}/api/applications/${id}`);
+        const response = await fetch(`${apiUrl}/api/applications/${id}`, {
+          headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        });
         if (!response.ok) {
            throw new Error(`Server returned ${response.status}`);
         }
@@ -29,7 +34,7 @@ export default function ApplicationDetailScreen() {
       }
     };
     if (id) fetchApplication();
-  }, [id]);
+  }, [id, session]);
 
   if (loading) {
     return (
