@@ -6,7 +6,9 @@ import { getOrCreateUser } from '../profiles/profile.service.js';
 const resumeService = new ResumeService();
 
 export async function resumeRoutes(fastify: FastifyInstance) {
+    console.log("inside resumeRoutes Screen")
   fastify.post('/upload', { preHandler: [authenticate] }, async (request, reply) => {
+    console.log('>>> [Route: /upload] POST request received');
     const data = await request.file();
     if (!data) {
       return reply.status(400).send({ error: 'No file uploaded' });

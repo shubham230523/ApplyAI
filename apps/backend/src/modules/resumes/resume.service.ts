@@ -36,20 +36,42 @@ export class ResumeService {
     const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(storagePath);
 
     // 2. AI-Powered Extraction
+    console.log(`[ResumeService] Starting extraction for ${fileName} (${mimeType})`);
     let extractedData: Partial<CandidateProfile>;
     try {
       if (mimeType === 'application/pdf' || mimeType.startsWith('image/')) {
-        // Use multimodal for PDF and Images (layout aware)
+        console.log(`[ResumeService] Using multimodal parsing for ${mimeType}`);
+
+        // Log raw text as baseline for comparison
+        if (mimeType === 'application/pdf') {
+          try {
+            const pdfData = await pdf(fileBuffer);
+            console.log('--- RAW PDF TEXT START ---');
+            console.log(pdfData.text);
+            console.log('--- RAW PDF TEXT END ---');
+          } catch (pdfError) {
+            console.warn('[ResumeService] Could not extract raw PDF text for logging');
+          }
+        }
+
         extractedData = await aiService.parseResumeMultimodal(fileBuffer, mimeType);
       } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        // Use mammoth for DOCX extraction
+        console.log('[ResumeService] Using DOCX parsing');
         const docxResult = await mammoth.extractRawText({ buffer: fileBuffer });
+        console.log('--- RAW DOCX TEXT START ---');
+        console.log(docxResult.value);
+        console.log('--- RAW DOCX TEXT END ---');
         extractedData = await aiService.parseResumeText(docxResult.value);
       } else {
-        // Fallback for plain text or unknown
+        console.log('[ResumeService] Using plain text parsing');
         const text = fileBuffer.toString('utf-8');
+        console.log('--- RAW TEXT START ---');
+        console.log(text);
+        console.log('--- RAW TEXT END ---');
         extractedData = await aiService.parseResumeText(text);
       }
+
+      console.log('[ResumeService] AI Extraction Successful:', JSON.stringify(extractedData, null, 2));
     } catch (e) {
       console.warn('AI Parsing failed, falling back to heuristics', e);
       // Fallback text extraction for heuristics

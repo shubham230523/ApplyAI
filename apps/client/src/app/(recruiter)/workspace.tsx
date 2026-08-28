@@ -12,7 +12,7 @@ export default function RecruiterDashboard() {
 
   useEffect(() => {
     const fetchRecruiterProfile = async () => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
       try {
         const response = await fetch(`${apiUrl}/api/profile/recruiter`, {
           headers: {

@@ -73,10 +73,12 @@ export class AIService {
       : promptText;
 
     try {
-      const model = this.client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      console.log('--- GEMINI AI CALL START ---');
+      const model = this.client.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
       const parts: any[] = [{ text: finalPrompt }];
       if (fileData) {
+        console.log(`[AIService] Including multimodal data: ${fileData.mimeType} (${fileData.data.length} bytes)`);
         parts.push({
           inlineData: {
             data: fileData.data,
@@ -88,6 +90,7 @@ export class AIService {
       const result = await model.generateContent(parts);
       const response = await result.response;
       const content = response.text().trim();
+      console.log('--- GEMINI AI RESPONSE RECEIVED ---');
 
       if (jsonSchema) {
         try {

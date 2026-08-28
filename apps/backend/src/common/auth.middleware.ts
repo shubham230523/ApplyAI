@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { supabase } from '../lib/supabase.js';
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+  console.log(`[AuthMiddleware] Verifying request for: ${request.url}`);
   try {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

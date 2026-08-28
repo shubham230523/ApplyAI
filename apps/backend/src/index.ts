@@ -1,6 +1,12 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+const port = Number(process.env.PORT) || 4001;
+console.log(`BOOTING BACKEND ON PORT ${port}...`);
+if (!process.env.PORT) {
+  console.log('NOTE: process.env.PORT is not defined, defaulting to 4001');
+}
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
@@ -41,7 +47,14 @@ async function main() {
 
     await fastify.register(swaggerUi, { routePrefix: '/docs' });
 
-    fastify.get('/health', async () => ({ status: 'ok' }));
+    fastify.addHook('onRequest', async (request, reply) => {
+      console.log(`>>> Incoming Request: ${request.method} ${request.url}`);
+    });
+
+    fastify.get('/health', async () => {
+      console.log('HEALTH CHECK HIT');
+      return { status: 'ok' };
+    });
 
     await fastify.register(profileRoutes, { prefix: '/api/profile' });
     await fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
@@ -49,7 +62,6 @@ async function main() {
     await fastify.register(applicationRoutes, { prefix: '/api/applications' });
     await fastify.register(jobsRoutes, { prefix: '/api/jobs' });
 
-    const port = Number(process.env.PORT) || 4000;
     await fastify.listen({ port, host: '0.0.0.0' });
     console.log(`Server listening on port ${port}`);
   } catch (err) {

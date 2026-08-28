@@ -22,7 +22,7 @@ export default function JobDetailsScreen() {
 
   useEffect(() => {
     const fetchJobAndStatus = async () => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
       try {
         const [jobRes, appsRes] = await Promise.all([
           fetch(`${apiUrl}/api/jobs/${id}`),
@@ -75,7 +75,7 @@ export default function JobDetailsScreen() {
   const handleApply = async () => {
     if (isApplied || applying) return;
 
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
     setApplying(true);
 
     try {

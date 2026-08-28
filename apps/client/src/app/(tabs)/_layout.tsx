@@ -76,7 +76,7 @@ export default function TabsLayout() {
   const fetchProfile = async () => {
     if (!session) return;
     setLoadingProfile(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
     try {
       const response = await fetch(`${apiUrl}/api/profile`, {
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
@@ -109,7 +109,7 @@ export default function TabsLayout() {
 
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
     try {
       const formData = new FormData();
       // Use fetch to get blob for compatibility with Expo's new fetch implementation
@@ -158,7 +158,7 @@ export default function TabsLayout() {
       const pdfBlob = new Blob([blob], { type: 'application/pdf' });
       formData.append('file', pdfBlob, file.name);
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
       const uploadResponse = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
         body: formData,
