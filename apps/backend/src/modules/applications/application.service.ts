@@ -7,7 +7,7 @@ import { CandidateProfile } from '@applyai/shared-types';
 const aiService = new AIService();
 
 export class ApplicationService {
-  async applyToJob(userId: string, jobId: string) {
+  async applyToJob(userId: string, jobId: string, customCoverLetter?: string) {
     if (!db) throw new Error('Database connection not available');
     // 1. Fetch Job and User Profile/Resume
     const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
@@ -43,13 +43,17 @@ export class ApplicationService {
       return existing;
     }
 
-    // 3. Generate AI Cover Letter
-    const profile = resume.parsedContent as unknown as CandidateProfile;
-    let coverLetter = "Strategic application submitted.";
-    try {
-       coverLetter = await aiService.generateCoverLetter(profile, job.description);
-    } catch (aiErr) {
-       console.warn('[ApplicationService] AI Cover Letter generation failed, using default.');
+    // 3. Handle Cover Letter
+    let coverLetter = customCoverLetter;
+
+    if (!coverLetter) {
+      const profile = resume.parsedContent as unknown as CandidateProfile;
+      coverLetter = "Strategic application submitted.";
+      try {
+         coverLetter = await aiService.generateCoverLetter(profile, job.description);
+      } catch (aiErr) {
+         console.warn('[ApplicationService] AI Cover Letter generation failed, using default.');
+      }
     }
 
     // 4. Save Application

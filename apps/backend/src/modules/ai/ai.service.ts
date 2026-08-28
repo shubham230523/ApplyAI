@@ -371,8 +371,16 @@ export class AIService {
 
   async generateCoverLetter(profile: CandidateProfile, jd: string): Promise<string> {
     const messages = [
-      { role: 'system', content: 'Write a cover letter.' },
-      { role: 'user', content: `JD: ${jd}\nProfile: ${JSON.stringify(profile)}` }
+      {
+        role: 'system',
+        content: `You are a strategic career agent. Write a concise, persuasive cover letter (max 250 words) that connects the candidate's specific skills and experiences to the job requirements.
+        Use a professional yet modern tone. Do not use placeholders like [Date] or [Company Address].
+        Focus on how the candidate solves the company's problems.`
+      },
+      {
+        role: 'user',
+        content: `JOB DESCRIPTION:\n${jd}\n\nCANDIDATE PROFILE:\n${JSON.stringify(profile)}`
+      }
     ];
     return await this.callAI(messages);
   }

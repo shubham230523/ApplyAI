@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Linking, Alert, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Linking, Alert, useWindowDimensions, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
@@ -27,6 +27,10 @@ export default function JobDetailsScreen() {
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [matchResult, setMatchResult] = useState<{ score: number; feedback: string } | null>(null);
   const [loadingMatch, setLoadingMatch] = useState(true);
+
+  // Cover Letter State
+  const [coverLetter, setCoverLetter] = useState('');
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
 
   useEffect(() => {
     const fetchJobAndStatus = async () => {
@@ -76,6 +80,29 @@ export default function JobDetailsScreen() {
     };
     if (id) fetchJobAndStatus();
   }, [id, session]);
+
+  const handleGenerateCoverLetter = async () => {
+    if (generatingCoverLetter) return;
+    setGeneratingCoverLetter(true);
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    try {
+      const response = await fetch(`${apiUrl}/api/jobs/${id}/cover-letter`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCoverLetter(data.coverLetter);
+      } else {
+        const errorData = await response.json();
+        Alert.alert('AI Error', errorData.error || 'Failed to generate cover letter.');
+      }
+    } catch (e) {
+      console.error('Generate cover letter error:', e);
+      Alert.alert('Connection Error', 'Could not reach AI service.');
+    } finally {
+      setGeneratingCoverLetter(false);
+    }
+  };
 
   const formatSalary = (min: number | string | undefined, max: number | string | undefined) => {
     if (!min && !max) return 'Not Disclosed';
@@ -127,7 +154,7 @@ export default function JobDetailsScreen() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
         },
-        body: JSON.stringify({ jobId: job?.id })
+        body: JSON.stringify({ jobId: job?.id, coverLetter })
       });
       if (applyResponse.ok) {
         setIsApplied(true);
@@ -291,6 +318,48 @@ export default function JobDetailsScreen() {
                 {matchResult?.feedback || `This role at ${job.companyName} represents a logical progression for your career trajectory.`}
               </Text>
             )}
+          </View>
+
+          {/* Cover Letter Section */}
+          <View className="mb-12 bg-white p-8 rounded-[32px] border border-slate-200/60 shadow-sm">
+            <View className="flex-row items-center justify-between mb-6">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 bg-slate-50 rounded-xl items-center justify-center mr-3 border border-slate-100">
+                  <Icon name="doc.text.magnifyingglass" size={16} color="#475569" />
+                </View>
+                <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900`}>Cover Letter</Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleGenerateCoverLetter}
+                disabled={generatingCoverLetter || isApplied}
+                className="flex-row items-center bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100"
+              >
+                {generatingCoverLetter ? (
+                  <ActivityIndicator size="small" color="#6366f1" />
+                ) : (
+                  <>
+                    <Icon name="sparkles.fill" size={12} color="#6366f1" />
+                    <Text className="text-indigo-600 font-bold text-[11px] uppercase tracking-wider ml-2">Use AI</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              multiline
+              numberOfLines={6}
+              value={coverLetter}
+              onChangeText={setCoverLetter}
+              placeholder="Write a brief cover letter or use AI to generate one..."
+              placeholderTextColor="#94a3b8"
+              className={`bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 ${isMobile ? 'text-base' : 'text-sm'} leading-relaxed min-h-[200px]`}
+              textAlignVertical="top"
+              editable={!isApplied && !applying}
+            />
+            <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 text-center">
+              Personalize your pitch for a higher success rate
+            </Text>
           </View>
 
           {/* Original Description */}

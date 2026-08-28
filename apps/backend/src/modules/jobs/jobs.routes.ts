@@ -53,4 +53,37 @@ export async function jobsRoutes(fastify: FastifyInstance) {
       return reply.status(500).send({ error: 'Failed to calculate match score' });
     }
   });
+
+  fastify.get('/:id/cover-letter', { preHandler: [authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const userId = request.user.sub;
+
+    try {
+      const job = await jobsService.getJobById(id);
+      if (!job) return reply.status(404).send({ error: 'Job not found' });
+
+      // Fetch the main resume to get parsed content for AI
+      const { db } = await import('../../db/index.js');
+      const { resumes } = await import('../../db/schema.js');
+      const { eq, and } = await import('drizzle-orm');
+
+      if (!db) throw new Error('Database not available');
+
+      const [resume] = await db
+        .select()
+        .from(resumes)
+        .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
+        .limit(1);
+
+      if (!resume || !resume.parsedContent) {
+        return reply.status(400).send({ error: 'Main resume not found. Please upload a resume first.' });
+      }
+
+      const coverLetter = await aiService.generateCoverLetter(resume.parsedContent as any, job.description);
+      return { coverLetter };
+    } catch (error) {
+      console.error('Cover letter generation error:', error);
+      return reply.status(500).send({ error: 'Failed to generate cover letter' });
+    }
+  });
 }

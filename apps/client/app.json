@@ -2,6 +2,7 @@
   "expo": {
     "name": "ApplyAI",
     "slug": "ApplyAI",
+    "entryPoint": "index.js",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

@@ -6,11 +6,11 @@ const applicationService = new ApplicationService();
 
 export async function applicationRoutes(fastify: FastifyInstance) {
   fastify.post('/apply', { preHandler: [authenticate] }, async (request, reply) => {
-    const { jobId } = request.body as { jobId: string };
+    const { jobId, coverLetter } = request.body as { jobId: string, coverLetter?: string };
     const userId = request.user.sub;
 
     try {
-      const application = await applicationService.applyToJob(userId, jobId);
+      const application = await applicationService.applyToJob(userId, jobId, coverLetter);
       return application;
     } catch (error: any) {
       console.error('Application error:', error);
