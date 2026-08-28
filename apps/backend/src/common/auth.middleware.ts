@@ -20,7 +20,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     }
 
     // Map Supabase user to the format expected by the rest of the app
-    request.user = {
+    (request as any).user = {
       sub: user.id,
       email: user.email || '',
       user_metadata: user.user_metadata as any
@@ -31,24 +31,5 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       error: 'Unauthorized',
       message: err.message
     });
-  }
-}
-
-declare module '@fastify/jwt' {
-  interface FastifyJWT {
-    payload: {
-      sub: string;
-      email: string;
-      user_metadata?: {
-        role?: string;
-      };
-    };
-    user: {
-      sub: string;
-      email: string;
-      user_metadata?: {
-        role?: string;
-      };
-    };
   }
 }

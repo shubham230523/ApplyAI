@@ -46,14 +46,19 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "babel-plugin-module-resolver": "^5.0.3",
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start --port 8080",
+    "prestart": "node ./scripts/update-branch.js",
+    "preweb": "node ./scripts/update-branch.js",
+    "preandroid": "node ./scripts/update-branch.js",
+    "preios": "node ./scripts/update-branch.js",
+    "start": "cross-env EXPO_ROUTER_APP_DIR=src/app expo start --port 8081",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android --port 8080",
-    "ios": "expo start --ios --port 8080",
-    "web": "cross-env EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=true expo start --web --clear --port 8080",
+    "android": "cross-env EXPO_ROUTER_APP_DIR=src/app expo start --android --port 8081",
+    "ios": "cross-env EXPO_ROUTER_APP_DIR=src/app expo start --ios --port 8081",
+    "web": "cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 EXPO_ROUTER_APP_DIR=src/app EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=true expo start --web --clear --port 8081",
     "build": "expo export -p web",
     "lint": "expo lint"
   },

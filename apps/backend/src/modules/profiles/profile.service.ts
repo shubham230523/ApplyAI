@@ -68,6 +68,16 @@ export async function updateProfile(userId: string, data: ProfileInput) {
       })
       .where(eq(profiles.userId, userId))
       .returning();
+
+    // Sync with main resume
+    try {
+      const { ResumeService } = await import('../resumes/resume.service.js');
+      const resumeService = new ResumeService();
+      await resumeService.syncResumeWithProfile(userId, data);
+    } catch (e) {
+      console.warn('Resume sync failed:', e);
+    }
+
     return updated;
   } else {
     const [created] = await db
@@ -77,6 +87,16 @@ export async function updateProfile(userId: string, data: ProfileInput) {
         userId,
       })
       .returning();
+
+    // Sync with main resume
+    try {
+      const { ResumeService } = await import('../resumes/resume.service.js');
+      const resumeService = new ResumeService();
+      await resumeService.syncResumeWithProfile(userId, data);
+    } catch (e) {
+      console.warn('Resume sync failed:', e);
+    }
+
     return created;
   }
 }

@@ -1,4 +1,5 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
+import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StyleSheet, Platform } from 'react-native';
@@ -22,12 +23,24 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
+  // Update browser tab title based on branch
   useEffect(() => {
     if (Platform.OS === 'web') {
-      const branchName = process.env.EXPO_PUBLIC_GIT_BRANCH || 'unknown';
-      document.title = `ApplyAI [${branchName}]`;
+      const branch = process.env.EXPO_PUBLIC_GIT_BRANCH;
+      const baseTitle = 'ApplyAI';
+      const fullTitle = branch ? `${baseTitle} (${branch})` : baseTitle;
+
+      console.log(`[TabTitle] Setting title to: ${fullTitle} (Branch: ${branch})`);
+
+      // Update immediately and again after a short delay to override Expo Router's automatic title
+      document.title = fullTitle;
+      const timeout = setTimeout(() => {
+        document.title = fullTitle;
+      }, 500);
+
+      return () => clearTimeout(timeout);
     }
-  }, []);
+  }, [segments]); // Re-run on every navigation
 
   useEffect(() => {
     if (loading) return;

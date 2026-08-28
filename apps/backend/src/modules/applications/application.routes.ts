@@ -2,15 +2,14 @@ import { FastifyInstance } from 'fastify';
 import { ApplicationService } from './application.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
 
-const applicationService = new ApplicationService();
-
 export async function applicationRoutes(fastify: FastifyInstance) {
+  const applicationService = new ApplicationService();
   fastify.post('/apply', { preHandler: [authenticate] }, async (request, reply) => {
-    const { jobId, coverLetter } = request.body as { jobId: string, coverLetter?: string };
-    const userId = request.user.sub;
+    const { jobId, resumeId, coverLetter } = request.body as { jobId: string, resumeId?: string, coverLetter?: string };
+    const userId = (request as any).user.sub;
 
     try {
-      const application = await applicationService.applyToJob(userId, jobId, coverLetter);
+      const application = await applicationService.applyToJob(userId, jobId, resumeId, coverLetter);
       return application;
     } catch (error: any) {
       console.error('Application error:', error);
@@ -19,19 +18,19 @@ export async function applicationRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/', { preHandler: [authenticate] }, async (request, reply) => {
-    const userId = request.user.sub;
+    const userId = (request as any).user.sub;
     return applicationService.getUserApplications(userId);
   });
 
   fastify.get('/ids', { preHandler: [authenticate] }, async (request, reply) => {
-    const userId = request.user.sub;
+    const userId = (request as any).user.sub;
     const apps = await applicationService.getUserApplications(userId);
     return apps.map((a: any) => a.jobId);
   });
 
   fastify.get('/:id', { preHandler: [authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const userId = request.user.sub;
+    const userId = (request as any).user.sub;
 
     const application = await applicationService.getApplicationById(userId, id);
     if (!application) {

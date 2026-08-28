@@ -1,5 +1,4 @@
 import { JobSearchParams, CandidateProfile, OrchestratorResponse, Job } from '@applyai/shared-types';
-import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../../lib/supabase.js';
 
 // API Keys
@@ -30,6 +29,10 @@ const ResumeSchema = {
     yearsExperience: { type: "number" },
     skills: { type: "array", items: { type: "string" } },
     education: { type: "array", items: { type: "string" } },
+    certifications: { type: "array", items: { type: "string" } },
+    projects: { type: "array", items: { type: "string" } },
+    achievements: { type: "array", items: { type: "string" } },
+    summary: { type: "string" },
     workExperience: {
       type: "array",
       items: {
@@ -53,28 +56,65 @@ const ResumeSchema = {
 export class AIService {
   private _client: any = null;
 
-  private get client() {
+  private async getClient() {
     if (!this._client) {
-      this._client = new GoogleGenAI({
-        apiKey: GEMINI_API_KEY
-      });
+      try {
+        const { GoogleGenAI } = await import('@google/genai');
+        this._client = new GoogleGenAI({
+          apiKey: GEMINI_API_KEY
+        });
+      } catch (err) {
+        console.error('Failed to initialize GoogleGenAI SDK:', err);
+        throw err;
+      }
     }
     return this._client;
   }
 
-  private async callAI(messages: any[], jsonSchema?: any): Promise<any> {
-    const prompt = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
-    const finalPrompt = jsonSchema
-      ? `${prompt}\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`
-      : prompt;
-
+  private async callAI(messages: any[], jsonSchema?: any, fileData?: { data: string, mimeType: string }): Promise<any> {
     try {
-      const result = await this.client.models.generateContent({
-        model: 'gemini-3.5-flash-lite',
-        contents: finalPrompt
+      const client = await this.getClient();
+      const systemMessage = messages.find(m => m.role === 'system')?.content;
+      const userMessages = messages.filter(m => m.role !== 'system');
+
+      // Add JSON instructions to the last user message
+      let lastUserMessage = userMessages[userMessages.length - 1]?.content || '';
+      if (jsonSchema) {
+        lastUserMessage += `\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`;
+      }
+
+      const contents: any[] = userMessages.map((m, i) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: i === userMessages.length - 1 ? lastUserMessage : m.content }]
+      }));
+
+      if (contents.length === 0) {
+        contents.push({ role: 'user', parts: [{ text: lastUserMessage }] });
+      }
+
+      if (fileData) {
+        console.log(`[AIService] Including multimodal data: ${fileData.mimeType} (${fileData.data.length} bytes)`);
+        contents[contents.length - 1].parts.push({
+          inlineData: {
+            data: fileData.data,
+            mimeType: fileData.mimeType
+          }
+        });
+      }
+
+      console.log('--- GEMINI AI CALL START ---');
+      const result = await client.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemMessage || undefined,
+      }).generateContent({
+        contents: contents,
+        generationConfig: jsonSchema ? {
+          responseMimeType: 'application/json',
+        } : undefined
       });
 
-      const content = result.text.trim();
+      const content = result.response.text()?.trim() || '';
+      console.log('--- GEMINI AI RESPONSE RECEIVED ---');
 
       if (jsonSchema) {
         try {
@@ -295,6 +335,27 @@ export class AIService {
     return { query, params, jobs, message };
   }
 
+  async parseResumeMultimodal(buffer: Buffer, mimeType: string): Promise<CandidateProfile> {
+    const base64Data = buffer.toString('base64');
+
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert resume parser. Extract structured data from the provided resume file.
+        Handle complex multi-column layouts, tables, and non-standard sections accurately.
+        If the file is an image, perform high-fidelity OCR first.`
+      },
+      { role: 'user', content: 'Parse this resume.' }
+    ];
+
+    try {
+      return await this.callAI(messages, ResumeSchema, { data: base64Data, mimeType });
+    } catch (e) {
+      console.error('Multimodal parsing failed:', e);
+      throw e;
+    }
+  }
+
   async parseResumeText(text: string): Promise<CandidateProfile> {
     const messages = [
       {
@@ -336,6 +397,37 @@ export class AIService {
     } catch (e) {
         console.error(e)
       return "Unable to generate summary at this time.";
+    }
+  }
+
+  async tailorResume(resumeContent: CandidateProfile, jobDescription: string): Promise<CandidateProfile> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert career consultant and resume writer.
+        Your goal is to TAILOR the provided resume data to better match the given Job Description.
+
+        CRITICAL RULES:
+        1. Keep all core facts true (education, dates, companies).
+        2. Rephrase bullet points and summaries to highlight relevant skills and achievements mentioned in the JD.
+        3. Prioritize skills that match the JD requirements.
+        4. Maintain a professional, impact-oriented tone.`
+      },
+      {
+        role: 'user',
+        content: `JOB DESCRIPTION:
+        ${jobDescription}
+
+        ORIGINAL RESUME DATA:
+        ${JSON.stringify(resumeContent, null, 2)}`
+      }
+    ];
+
+    try {
+      return await this.callAI(messages, ResumeSchema);
+    } catch (e) {
+      console.error('[AIService] Resume tailoring failed:', e);
+      throw e;
     }
   }
 

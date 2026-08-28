@@ -47,6 +47,7 @@ export interface CandidateProfile {
   certifications: string[];
   projects: string[];
   achievements: string[];
+  summary?: string;
   preferredLocations: string[];
   preferredSalary?: number;
   address?: string;

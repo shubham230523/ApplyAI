@@ -1,7 +1,7 @@
 import { CandidateProfile } from '@applyai/shared-types';
 
 export class ApplicationService {
-  async applyToJob(userId: string, jobId: string, customCoverLetter?: string) {
+  async applyToJob(userId: string, jobId: string, resumeId?: string, customCoverLetter?: string) {
     const { db } = await import('../../db/index.js');
     const { applications, jobs, resumes } = await import('../../db/schema.js');
     const { AIService } = await import('../ai/ai.service.js');
@@ -13,10 +13,19 @@ export class ApplicationService {
     const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
     if (!job) throw new Error('Job not found');
 
-    let [resume] = await db.select().from(resumes).where(and(eq(resumes.userId, userId), eq(resumes.isMain, true))).limit(1);
+    let resume: any;
+    if (resumeId) {
+      [resume] = await db.select().from(resumes).where(and(eq(resumes.id, resumeId), eq(resumes.userId, userId))).limit(1);
+    }
+
+    if (!resume) {
+      [resume] = await db.select().from(resumes).where(and(eq(resumes.userId, userId), eq(resumes.isMain, true))).limit(1);
+    }
+
     if (!resume) {
       [resume] = await db.select().from(resumes).where(eq(resumes.userId, userId)).orderBy(desc(resumes.createdAt)).limit(1);
     }
+
     if (!resume) throw new Error('No resume found. Please upload a resume first.');
 
     const [existing] = await db.select().from(applications).where(and(eq(applications.userId, userId), eq(applications.jobId, jobId))).limit(1);

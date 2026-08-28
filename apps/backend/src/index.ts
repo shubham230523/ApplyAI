@@ -1,17 +1,18 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+const port = Number(process.env.PORT) || 4001;
+console.log(`BOOTING BACKEND ON PORT ${port}...`);
+if (!process.env.PORT) {
+  console.log('NOTE: process.env.PORT is not defined, defaulting to 4001');
+}
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import { profileRoutes } from './modules/profiles/profile.routes.js';
-import { orchestratorRoutes } from './modules/orchestrator/orchestrator.routes.js';
-import { resumeRoutes } from './modules/resumes/resume.routes.js';
-import { applicationRoutes } from './modules/applications/application.routes.js';
-import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
   logger: true,
@@ -19,7 +20,12 @@ const fastify = Fastify({
 
 async function main() {
   try {
-    await fastify.register(cors, { origin: '*' });
+    await fastify.register(cors, {
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+      credentials: true,
+    });
 
     await fastify.register(multipart, {
       limits: {
@@ -39,7 +45,16 @@ async function main() {
 
     await fastify.register(swaggerUi, { routePrefix: '/docs' });
 
-    fastify.get('/health', async () => ({ status: 'ok' }));
+    fastify.addHook('onRequest', async (request, reply) => {
+      console.log(`>>> Incoming Request: ${request.method} ${request.url}`);
+    });
+
+    console.log('--- Registering Routes ---');
+    const { profileRoutes } = await import('./modules/profiles/profile.routes.js');
+    const { orchestratorRoutes } = await import('./modules/orchestrator/orchestrator.routes.js');
+    const { resumeRoutes } = await import('./modules/resumes/resume.routes.js');
+    const { applicationRoutes } = await import('./modules/applications/application.routes.js');
+    const { jobsRoutes } = await import('./modules/jobs/jobs.routes.js');
 
     await fastify.register(profileRoutes, { prefix: '/api/profile' });
     await fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
@@ -47,7 +62,6 @@ async function main() {
     await fastify.register(applicationRoutes, { prefix: '/api/applications' });
     await fastify.register(jobsRoutes, { prefix: '/api/jobs' });
 
-    const port = Number(process.env.PORT) || 4000;
     await fastify.listen({ port, host: '0.0.0.0' });
     console.log(`Server listening on port ${port}`);
   } catch (err) {
@@ -57,4 +71,16 @@ async function main() {
   }
 }
 
-main();
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('!!! Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('!!! Uncaught Exception:', err);
+});
+
+main().catch(err => {
+  console.error('CRITICAL: main() failed with unhandled error:');
+  console.error(err);
+  process.exit(1);
+});

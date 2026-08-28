@@ -22,9 +22,9 @@ export async function orchestratorRoutes(fastify: FastifyInstance) {
       const { db } = await import('../../db/index.js');
       const { userSearches } = await import('../../db/schema.js');
 
-      if (request.user && db) {
+      if ((request as any).user && db) {
         await db.insert(userSearches).values({
-          userId: request.user.sub,
+          userId: (request as any).user.sub,
           query: query,
           params: response.params,
         });
@@ -45,7 +45,7 @@ export async function orchestratorRoutes(fastify: FastifyInstance) {
   fastify.get('/recommendations', { preHandler: [authenticate] }, async (request, reply) => {
     console.error("inside /recommendations");
     try {
-      const userId = request.user.sub;
+      const userId = (request as any).user.sub;
       const recommendations = await jobsService.getRecommendations(userId);
       return { jobs: recommendations };
     } catch (error: any) {
