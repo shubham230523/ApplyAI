@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getProfile, updateProfile, getOrCreateUser, getRecruiterProfile, updateRecruiterProfile } from './profile.service.js';
+import { getProfile, updateProfile, getOrCreateUser, getRecruiterProfile, getOrCreateRecruiterProfile, updateRecruiterProfile } from './profile.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
 import { supabase } from '../../lib/supabase.js';
 import { randomUUID } from 'crypto';
@@ -116,7 +116,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
-      const profile = await getRecruiterProfile(dbUser.id);
+      const profile = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
       return profile || null;
     }
   );

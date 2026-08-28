@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/auth';
 
@@ -89,12 +89,13 @@ export default function CreateJobScreen() {
         Alert.alert('Success', 'Job posted successfully!');
         router.replace('/(recruiter)/workspace');
       } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to post job');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Job creation failed:', response.status, errorData);
+        throw new Error(errorData.error || errorData.message || `Server responded with ${response.status}`);
       }
     } catch (error: any) {
       console.error('Error creating job:', error);
-      Alert.alert('Error', error.message || 'Failed to save job. Please try again.');
+      Alert.alert('Post Failed', error.message || 'Failed to save job. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -173,7 +174,7 @@ export default function CreateJobScreen() {
         </View>
 
         <ScrollView className="flex-1" contentContainerStyle={{ alignItems: 'center' }} showsVerticalScrollIndicator={false}>
-          <View style={{ maxWidth: 950, width: '100%' }} className="px-6 pt-12 pb-48">
+          <View style={{ maxWidth: 950, width: '100%' }} className="px-6 pt-12 pb-40">
             {/* Header */}
             <View className="bg-slate-900 p-12 rounded-[48px] mb-12 shadow-2xl shadow-slate-300 overflow-hidden relative border-b-8 border-emerald-600">
               <View className="absolute -top-10 -right-10 w-48 h-48 bg-white/5 rounded-full" />

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, ScrollView, RefreshControl, Platform } from 'react-native';
 import { useAuth } from '@/contexts/auth';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { useRouter } from 'expo-router';
 import { Job } from '@applyai/shared-types';
 
@@ -93,9 +93,14 @@ export default function RecruiterDashboard() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 100 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 40,
+          paddingBottom: 80, // Increased padding to prevent cropping
+          flexGrow: 1
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         <View className="w-full max-w-5xl mx-auto">
           {/* Welcome Section */}

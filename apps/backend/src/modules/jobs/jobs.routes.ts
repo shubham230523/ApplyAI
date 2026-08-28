@@ -12,10 +12,10 @@ export async function jobsRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       // Dynamic import to avoid circular dependencies or startup crashes
-      const { getRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
+      const { getOrCreateRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
 
       const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
-      const recruiter = await getRecruiterProfile(dbUser.id);
+      const recruiter = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
 
       if (!recruiter) {
         return reply.status(404).send({ error: 'Recruiter profile not found' });
@@ -32,10 +32,10 @@ export async function jobsRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const { getRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
+      const { getOrCreateRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
 
       const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
-      const recruiter = await getRecruiterProfile(dbUser.id);
+      const recruiter = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
 
       if (!recruiter) {
         return reply.status(404).send({ error: 'Recruiter profile not found' });

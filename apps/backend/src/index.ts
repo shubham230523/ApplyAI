@@ -7,6 +7,7 @@ import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import { verifySchema } from './db/index.js';
 import { profileRoutes } from './modules/profiles/profile.routes.js';
 import { orchestratorRoutes } from './modules/orchestrator/orchestrator.routes.js';
 import { resumeRoutes } from './modules/resumes/resume.routes.js';
@@ -15,6 +16,14 @@ import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
   logger: true,
+});
+
+// Global error handlers to prevent silent crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err);
 });
 
 async function main() {
@@ -42,6 +51,13 @@ async function main() {
     await fastify.register(swaggerUi, { routePrefix: '/docs' });
 
     fastify.get('/health', async () => ({ status: 'ok' }));
+
+    // Run schema verification
+    try {
+      await verifySchema();
+    } catch (err) {
+      console.warn('Schema verification failed, continuing...', err);
+    }
 
     await fastify.register(profileRoutes, { prefix: '/api/profile' });
     await fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });

@@ -82,7 +82,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: '#fafaf9' }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <RootLayoutNav />

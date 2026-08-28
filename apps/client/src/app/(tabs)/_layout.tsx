@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, Slot, Link, usePathname, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, useWindowDimensions, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/contexts/auth';
 import { ProfileContent } from '@/components/profile-content';
 import * as DocumentPicker from 'expo-document-picker';

@@ -115,6 +115,23 @@ export async function getRecruiterProfile(userId: string) {
   return recruiter;
 }
 
+export async function getOrCreateRecruiterProfile(userId: string, email: string) {
+  if (!db) return null;
+  const existing = await getRecruiterProfile(userId);
+  if (existing) return existing;
+
+  const [created] = await db
+    .insert(recruiters)
+    .values({
+      userId,
+      email,
+      name: email.split('@')[0],
+      companyName: 'My Company',
+    })
+    .returning();
+  return created;
+}
+
 export async function updateRecruiterProfile(userId: string, data: any) {
   if (!db) return null;
   const existing = await getRecruiterProfile(userId);

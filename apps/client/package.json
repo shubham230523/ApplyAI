@@ -1,6 +1,6 @@
 {
   "name": "@applyai/client",
-  "main": "./App.js",
+  "main": "index.js",
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.11",
