@@ -29,16 +29,6 @@ export default function LoginScreen() {
     setLoading(false);
   }
 
-  async function signInWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: Platform.OS === 'web' ? window.location.origin : 'applyai://',
-      }
-    });
-    if (error) alert(error.message);
-  }
-
   return (
     <SafeAreaView className="flex-1 bg-[#fafaf9]">
       <KeyboardAvoidingView
@@ -92,20 +82,6 @@ export default function LoginScreen() {
                 ) : (
                   <Text className="text-white font-extrabold text-sm uppercase tracking-widest">Sign In</Text>
                 )}
-              </TouchableOpacity>
-
-              <View className="flex-row items-center my-8">
-                <View className="flex-1 h-[1px] bg-slate-100" />
-                <Text className="mx-4 text-slate-300 font-bold text-[10px] uppercase">Or continue with</Text>
-                <View className="flex-1 h-[1px] bg-slate-100" />
-              </View>
-
-              <TouchableOpacity
-                className="bg-white py-4 rounded-2xl flex-row items-center justify-center border border-slate-200 shadow-sm active:bg-slate-50"
-                onPress={signInWithGoogle}
-              >
-                <Icon name="sparkles" size={18} color="#475569" />
-                <Text className="text-slate-600 font-bold text-sm ml-3">Google Account</Text>
               </TouchableOpacity>
             </View>
 
