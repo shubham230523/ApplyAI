@@ -5,19 +5,26 @@ import { eq, and, desc } from 'drizzle-orm';
 import { CandidateProfile } from '@applyai/shared-types';
 
 export class ApplicationService {
-  private aiService = new AIService();
-
-  async applyToJob(userId: string, jobId: string) {
+  async applyToJob(userId: string, jobId: string, resumeId?: string) {
+    const { AIService } = await import('../ai/ai.service.js');
+    const aiService = new AIService();
     if (!db) throw new Error('Database connection not available');
     // 1. Fetch Job and User Profile/Resume
     const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
     if (!job) throw new Error('Job not found');
 
-    let [resume] = await db
-      .select()
-      .from(resumes)
-      .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
-      .limit(1);
+    let resume: any;
+    if (resumeId) {
+      [resume] = await db.select().from(resumes).where(and(eq(resumes.id, resumeId), eq(resumes.userId, userId))).limit(1);
+    }
+
+    if (!resume) {
+      [resume] = await db
+        .select()
+        .from(resumes)
+        .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
+        .limit(1);
+    }
 
     if (!resume) {
       // Fallback: Use the most recently uploaded resume if no "Main" is set
@@ -47,7 +54,7 @@ export class ApplicationService {
     const profile = resume.parsedContent as unknown as CandidateProfile;
     let coverLetter = "Strategic application submitted.";
     try {
-       coverLetter = await this.aiService.generateCoverLetter(profile, job.description);
+       coverLetter = await aiService.generateCoverLetter(profile, job.description);
     } catch (aiErr) {
        console.warn('[ApplicationService] AI Cover Letter generation failed, using default.');
     }

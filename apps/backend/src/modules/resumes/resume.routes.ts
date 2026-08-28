@@ -2,11 +2,46 @@ import { FastifyInstance } from 'fastify';
 import { ResumeService } from './resume.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
 import { getOrCreateUser } from '../profiles/profile.service.js';
-
-const resumeService = new ResumeService();
+import { db } from '../../db/index.js';
+import { resumes } from '../../db/schema.js';
+import { eq, and } from 'drizzle-orm';
 
 export async function resumeRoutes(fastify: FastifyInstance) {
+    const resumeService = new ResumeService();
     console.log("inside resumeRoutes Screen")
+
+  fastify.get('/main', { preHandler: [authenticate] }, async (request, reply) => {
+    const user = (request as any).user;
+    const userId = user.sub;
+
+    if (!db) return reply.status(500).send({ error: 'DB not available' });
+
+    const [mainResume] = await db.select()
+      .from(resumes)
+      .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
+      .limit(1);
+
+    return mainResume || null;
+  });
+
+  fastify.post('/tailor', { preHandler: [authenticate] }, async (request, reply) => {
+    const { jobId } = request.body as { jobId: string };
+    const user = (request as any).user;
+    const userId = user.sub;
+
+    if (!jobId) {
+      return reply.status(400).send({ error: 'jobId is required' });
+    }
+
+    try {
+      const result = await resumeService.tailorResume(userId, jobId);
+      return result;
+    } catch (error: any) {
+      console.error('Tailoring error:', error);
+      return reply.status(500).send({ error: error.message || 'Failed to tailor resume' });
+    }
+  });
+
   fastify.post('/upload', { preHandler: [authenticate] }, async (request, reply) => {
     console.log('>>> [Route: /upload] POST request received');
     const data = await (request as any).file();

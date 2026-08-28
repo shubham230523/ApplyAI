@@ -13,11 +13,6 @@ import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import { profileRoutes } from './modules/profiles/profile.routes.js';
-import { orchestratorRoutes } from './modules/orchestrator/orchestrator.routes.js';
-import { resumeRoutes } from './modules/resumes/resume.routes.js';
-import { applicationRoutes } from './modules/applications/application.routes.js';
-import { jobsRoutes } from './modules/jobs/jobs.routes.js';
 
 const fastify = Fastify({
   logger: true,
@@ -56,10 +51,12 @@ async function main() {
       console.log(`>>> Incoming Request: ${request.method} ${request.url}`);
     });
 
-    fastify.get('/health', async () => {
-      console.log('HEALTH CHECK HIT');
-      return { status: 'ok' };
-    });
+    console.log('--- Registering Routes ---');
+    const { profileRoutes } = await import('./modules/profiles/profile.routes.js');
+    const { orchestratorRoutes } = await import('./modules/orchestrator/orchestrator.routes.js');
+    const { resumeRoutes } = await import('./modules/resumes/resume.routes.js');
+    const { applicationRoutes } = await import('./modules/applications/application.routes.js');
+    const { jobsRoutes } = await import('./modules/jobs/jobs.routes.js');
 
     await fastify.register(profileRoutes, { prefix: '/api/profile' });
     await fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });

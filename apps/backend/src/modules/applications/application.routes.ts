@@ -2,16 +2,15 @@ import { FastifyInstance } from 'fastify';
 import { ApplicationService } from './application.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
 
-const applicationService = new ApplicationService();
-
 export async function applicationRoutes(fastify: FastifyInstance) {
+  const applicationService = new ApplicationService();
   fastify.post('/apply', { preHandler: [authenticate] }, async (request, reply) => {
-    const { jobId } = request.body as { jobId: string };
+    const { jobId, resumeId } = request.body as { jobId: string, resumeId?: string };
     const user = (request as any).user;
     const userId = user.sub;
 
     try {
-      const application = await applicationService.applyToJob(userId, jobId);
+      const application = await applicationService.applyToJob(userId, jobId, resumeId);
       return application;
     } catch (error: any) {
       console.error('Application error:', error);

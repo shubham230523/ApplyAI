@@ -1,21 +1,24 @@
 import { CandidateProfile, WorkExperience } from '@applyai/shared-types';
 import { db } from '../../db/index.js';
 import { resumes, profiles } from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { supabase } from '../../lib/supabase.js';
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
-const mammoth = require('mammoth');
 import { randomUUID } from 'crypto';
 import { AIService } from '../ai/ai.service.js';
+import { jobs } from '../../db/schema.js';
+
+const require = createRequire(import.meta.url);
 
 export class ResumeService {
-  private aiService = new AIService();
   /**
    * Uploads resume to Supabase Storage and parses it for key fields.
    */
   async uploadAndParse(fileBuffer: Buffer, userId: string, fileName: string, mimeType: string): Promise<any> {
+    const { AIService } = await import('../ai/ai.service.js');
+    const aiService = new AIService();
+    const pdf = require('pdf-parse');
+    const mammoth = require('mammoth');
     const fileId = randomUUID();
     const storagePath = `${userId}/${fileId}-${fileName}`;
 
@@ -53,21 +56,21 @@ export class ResumeService {
           }
         }
 
-        extractedData = await this.aiService.parseResumeMultimodal(fileBuffer, mimeType);
+        extractedData = await aiService.parseResumeMultimodal(fileBuffer, mimeType);
       } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         console.log('[ResumeService] Using DOCX parsing');
         const docxResult = await mammoth.extractRawText({ buffer: fileBuffer });
         console.log('--- RAW DOCX TEXT START ---');
         console.log(docxResult.value);
         console.log('--- RAW DOCX TEXT END ---');
-        extractedData = await this.aiService.parseResumeText(docxResult.value);
+        extractedData = await aiService.parseResumeText(docxResult.value);
       } else {
         console.log('[ResumeService] Using plain text parsing');
         const text = fileBuffer.toString('utf-8');
         console.log('--- RAW TEXT START ---');
         console.log(text);
         console.log('--- RAW TEXT END ---');
-        extractedData = await this.aiService.parseResumeText(text);
+        extractedData = await aiService.parseResumeText(text);
       }
 
       console.log('[ResumeService] AI Extraction Successful:', JSON.stringify(extractedData, null, 2));
@@ -85,12 +88,170 @@ export class ResumeService {
     }
 
     // 3. Save to Database
-    await this.saveResumeMetadata(userId, fileName, publicUrl, extractedData, mimeType);
+    const resumeId = await this.saveResumeMetadata(userId, fileName, publicUrl, extractedData, mimeType);
 
     return {
       ...extractedData,
       resumeUrl: publicUrl,
+      resumeId
     };
+  }
+
+  async generatePdf(profile: CandidateProfile): Promise<Buffer> {
+    const content = profile as any;
+    const PDFDocument = require('pdfkit');
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk: any) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // --- Header ---
+      doc.fontSize(24).fillColor('#1e1b4b').text(content.name || 'Resume', { align: 'center' });
+      doc.moveDown(0.2);
+      doc.fontSize(10).fillColor('#64748b').text(`${content.email} | ${content.phone || ''}`, { align: 'center' });
+      if (content.headline) {
+        doc.moveDown(0.5);
+        doc.fontSize(12).fillColor('#4338ca').text(content.headline, { align: 'center' });
+      }
+
+      doc.moveDown(1);
+      doc.strokeColor('#e2e8f0').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown(1);
+
+      // --- Summary ---
+      if (content.summary) {
+        doc.fontSize(14).fillColor('#1e1b4b').text('PROFESSIONAL SUMMARY', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#334155').text(content.summary, { align: 'justify' });
+        doc.moveDown(1.5);
+      }
+
+      // --- Skills ---
+      if (content.skills && content.skills.length > 0) {
+        doc.fontSize(14).fillColor('#1e1b4b').text('TECHNICAL SKILLS', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#334155').text(content.skills.join(' • '));
+        doc.moveDown(1.5);
+      }
+
+      // --- Experience ---
+      if (content.workExperience && content.workExperience.length > 0) {
+        doc.fontSize(14).fillColor('#1e1b4b').text('WORK EXPERIENCE', { underline: true });
+        doc.moveDown(0.5);
+
+        content.workExperience.forEach((exp: any) => {
+          doc.fontSize(11).fillColor('#0f172a').text(exp.company, { continued: true }).fillColor('#64748b').text(` | ${exp.role}`);
+          doc.fontSize(9).fillColor('#94a3b8').text(`${exp.startDate} - ${exp.endDate || 'Present'}`);
+          doc.moveDown(0.3);
+          doc.fontSize(10).fillColor('#475569').text(exp.description);
+          doc.moveDown(1);
+        });
+      }
+
+      // --- Education ---
+      if (content.education && content.education.length > 0) {
+        doc.fontSize(14).fillColor('#1e1b4b').text('EDUCATION', { underline: true });
+        doc.moveDown(0.5);
+        content.education.forEach((edu: any) => {
+          doc.fontSize(10).fillColor('#334155').text(edu);
+        });
+      }
+
+      doc.end();
+    });
+  }
+
+  async tailorResume(userId: string, jobId: string): Promise<any> {
+    if (!db) throw new Error('Database not available');
+
+    // 1. Fetch Main Resume
+    const [mainResume] = await db.select()
+      .from(resumes)
+      .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
+      .limit(1);
+
+    if (!mainResume) throw new Error('Main resume not found. Please upload one first.');
+
+    // 2. Fetch Job Details
+    const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
+    if (!job) throw new Error('Job not found');
+
+    // 3. AI Tailoring
+    console.log(`[ResumeService] Tailoring resume for job: ${job.title} at ${job.companyName}`);
+    const { AIService } = await import('../ai/ai.service.js');
+    const aiService = new AIService();
+    const tailoredContent = await aiService.tailorResume(
+      mainResume.parsedContent as any,
+      `Title: ${job.title}\nCompany: ${job.companyName}\nDescription: ${job.description}`
+    );
+
+    // 4. Generate New PDF
+    const pdfBuffer = await this.generatePdf(tailoredContent as CandidateProfile);
+
+    // 5. Upload to Storage
+    const tailoredFileName = `Tailored-${mainResume.fileName}`;
+    const fileId = randomUUID();
+    const storagePath = `${userId}/tailored/${fileId}-${tailoredFileName}`;
+
+    const { error: storageError } = await supabase.storage
+      .from('resumes')
+      .upload(storagePath, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true
+      });
+
+    if (storageError) throw new Error('Failed to upload tailored resume');
+
+    const { data: { publicUrl } } = supabase.storage.from('resumes').getPublicUrl(storagePath);
+
+    // 6. Save as a new (non-main) resume
+    const [saved] = await db.insert(resumes).values({
+      userId,
+      fileName: tailoredFileName,
+      fileUrl: publicUrl,
+      contentType: 'application/pdf',
+      parsedContent: tailoredContent,
+      isMain: false,
+    }).returning();
+
+    return {
+      resumeId: saved.id,
+      fileUrl: publicUrl,
+      parsedContent: tailoredContent
+    };
+  }
+
+  async syncResumeWithProfile(userId: string, profileData: any) {
+    if (!db) return;
+
+    // Find main resume
+    const [mainResume] = await db.select()
+      .from(resumes)
+      .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
+      .limit(1);
+
+    if (!mainResume) return;
+
+    // Merge profile data into parsedContent
+    const updatedContent = {
+      ...(mainResume.parsedContent as any),
+      name: profileData.name || (mainResume.parsedContent as any).name,
+      email: profileData.email || (mainResume.parsedContent as any).email,
+      phone: profileData.phone || (mainResume.parsedContent as any).phone,
+      yearsExperience: profileData.yearsExperience || (mainResume.parsedContent as any).yearsExperience,
+      skills: profileData.skills || (mainResume.parsedContent as any).skills,
+      education: profileData.education ? [profileData.education] : (mainResume.parsedContent as any).education,
+      workExperience: profileData.workExperience || (mainResume.parsedContent as any).workExperience,
+    };
+
+    await db.update(resumes)
+      .set({ parsedContent: updatedContent, updatedAt: new Date() })
+      .where(eq(resumes.id, mainResume.id));
+
+    console.log(`[ResumeService] Synced main resume for user: ${userId}`);
   }
 
   private heuristicExtract(text: string): Partial<CandidateProfile> {
@@ -153,13 +314,15 @@ export class ResumeService {
       .where(eq(resumes.userId, userId));
 
     // 2. Insert the new resume as the main one
-    await db.insert(resumes).values({
+    const [saved] = await db.insert(resumes).values({
       userId,
       fileName,
       fileUrl,
       contentType,
       parsedContent: extractedData,
       isMain: true,
-    });
+    }).returning();
+
+    return saved.id;
   }
 }

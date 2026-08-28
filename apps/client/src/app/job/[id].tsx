@@ -6,9 +6,11 @@ import { Icon } from '@/components/ui/icon';
 import { Job } from '@applyai/shared-types';
 import { Image } from 'expo-image';
 import { ResumeUploadModal } from '@/components/resume-upload-modal';
+import { useAuth } from '@/contexts/auth';
 
 export default function JobDetailsScreen() {
   const { id } = useLocalSearchParams();
+  const { session } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -19,14 +21,23 @@ export default function JobDetailsScreen() {
   const [showForceUpload, setShowForceUpload] = useState(false);
   const [isApplied, setIsApplied] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [mainResume, setMainResume] = useState<any>(null);
+  const [tailoring, setTailoring] = useState(false);
+  const [tailoredResume, setTailoredResume] = useState<any>(null);
 
   useEffect(() => {
     const fetchJobAndStatus = async () => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
       try {
-        const [jobRes, appsRes] = await Promise.all([
+        const headers: any = {};
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
+        const [jobRes, appsRes, resumeRes] = await Promise.all([
           fetch(`${apiUrl}/api/jobs/${id}`),
-          fetch(`${apiUrl}/api/applications/ids`)
+          fetch(`${apiUrl}/api/applications/ids`, { headers }),
+          fetch(`${apiUrl}/api/resume/main`, { headers })
         ]);
 
         if (jobRes.ok) {
@@ -40,6 +51,11 @@ export default function JobDetailsScreen() {
               setIsApplied(true);
            }
         }
+
+        if (resumeRes.ok) {
+          const resumeData = await resumeRes.json();
+          setMainResume(resumeData);
+        }
       } catch (error) {
         console.error('Fetch error in Job Details:', error);
       } finally {
@@ -47,7 +63,37 @@ export default function JobDetailsScreen() {
       }
     };
     if (id) fetchJobAndStatus();
-  }, [id]);
+  }, [id, session]);
+
+  const handleTailor = async () => {
+    if (!mainResume || tailoring) return;
+
+    setTailoring(true);
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
+    try {
+      const response = await fetch(`${apiUrl}/api/resume/tailor`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ jobId: id })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setTailoredResume(result);
+        Alert.alert('AI Tailoring Complete', 'Your resume has been optimized for this role.');
+      } else {
+        throw new Error('Tailoring failed');
+      }
+    } catch (e) {
+      console.error('Tailoring error:', e);
+      Alert.alert('Error', 'Failed to tailor resume with AI.');
+    } finally {
+      setTailoring(false);
+    }
+  };
 
   const formatSalary = (min: number | string | undefined, max: number | string | undefined) => {
     if (!min && !max) return 'Not Disclosed';
@@ -75,11 +121,13 @@ export default function JobDetailsScreen() {
   const handleApply = async () => {
     if (isApplied || applying) return;
 
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
     setApplying(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/profile`);
+      const response = await fetch(`${apiUrl}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
       if (!response.ok) {
         setShowForceUpload(true);
         setApplying(false);
@@ -93,8 +141,14 @@ export default function JobDetailsScreen() {
       }
       const applyResponse = await fetch(`${apiUrl}/api/applications/apply`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: job?.id })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          jobId: job?.id,
+          resumeId: tailoredResume?.resumeId
+        })
       });
       if (applyResponse.ok) {
         setIsApplied(true);
@@ -225,6 +279,72 @@ export default function JobDetailsScreen() {
               <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900`}>The Opportunity</Text>
             </View>
             <Text className={`${isMobile ? 'text-lg' : 'text-base'} text-slate-600 leading-relaxed`}>{job.description}</Text>
+          </View>
+
+          {/* Resume & Tailoring Section */}
+          <View className="mb-10 bg-white p-8 rounded-[32px] border border-slate-200/60 shadow-sm">
+            <View className="flex-row items-center justify-between mb-6">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 bg-indigo-50 rounded-xl items-center justify-center mr-3 border border-indigo-100/50">
+                  <Icon name="doc.text.fill" size={16} color="#6366f1" />
+                </View>
+                <Text className={`${isMobile ? 'text-xl' : 'text-lg'} font-bold text-slate-900`}>Your Resume</Text>
+              </View>
+              {mainResume && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(tailoredResume?.fileUrl || mainResume.fileUrl)}
+                  className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100"
+                >
+                  <Text className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">View PDF</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {mainResume ? (
+              <View>
+                <View className="bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-100">
+                  <Text className="text-slate-900 font-bold text-sm mb-1">{tailoredResume ? 'Tailored Resume Ready' : 'Main Resume Linked'}</Text>
+                  <Text className="text-slate-500 text-xs">
+                    {tailoredResume
+                      ? "AI has optimized this resume for the specific requirements of this role."
+                      : "We'll use your default resume unless you choose to tailor it."}
+                  </Text>
+                </View>
+
+                {!isApplied && (
+                  <TouchableOpacity
+                    onPress={handleTailor}
+                    disabled={tailoring || tailoredResume}
+                    className={`py-4 rounded-2xl items-center justify-center border-2 ${tailoredResume ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-indigo-100 shadow-sm'}`}
+                  >
+                    {tailoring ? (
+                      <ActivityIndicator color="#6366f1" size="small" />
+                    ) : (
+                      <View className="flex-row items-center">
+                        <Icon
+                          name={tailoredResume ? "checkmark.circle.fill" : "wand.and.stars"}
+                          size={16}
+                          color={tailoredResume ? "#10b981" : "#6366f1"}
+                        />
+                        <Text className={`font-bold ml-2 uppercase tracking-widest text-[13px] ${tailoredResume ? 'text-emerald-600' : 'text-indigo-600'}`}>
+                          {tailoredResume ? 'Tailored with AI' : 'Tailor your resume using AI'}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <View className="items-center py-4">
+                <Text className="text-slate-400 font-medium text-center mb-4">No resume found in your profile.</Text>
+                <TouchableOpacity
+                  onPress={() => setShowForceUpload(true)}
+                  className="bg-indigo-50 px-6 py-3 rounded-xl border border-indigo-100"
+                >
+                  <Text className="text-indigo-600 font-bold text-xs uppercase tracking-widest">Upload Now</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* AI Insight */}

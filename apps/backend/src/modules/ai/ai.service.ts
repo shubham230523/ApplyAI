@@ -382,6 +382,37 @@ export class AIService {
     }
   }
 
+  async tailorResume(resumeContent: CandidateProfile, jobDescription: string): Promise<CandidateProfile> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert career consultant and resume writer.
+        Your goal is to TAILOR the provided resume data to better match the given Job Description.
+
+        CRITICAL RULES:
+        1. Keep all core facts true (education, dates, companies).
+        2. Rephrase bullet points and summaries to highlight relevant skills and achievements mentioned in the JD.
+        3. Prioritize skills that match the JD requirements.
+        4. Maintain a professional, impact-oriented tone.`
+      },
+      {
+        role: 'user',
+        content: `JOB DESCRIPTION:
+        ${jobDescription}
+
+        ORIGINAL RESUME DATA:
+        ${JSON.stringify(resumeContent, null, 2)}`
+      }
+    ];
+
+    try {
+      return await this.callAI(messages, ResumeSchema);
+    } catch (e) {
+      console.error('[AIService] Resume tailoring failed:', e);
+      throw e;
+    }
+  }
+
   async calculateMatchScore(jd: string, profile: CandidateProfile): Promise<{ score: number; feedback: string }> {
     return { score: 85, feedback: "Good match." };
   }
