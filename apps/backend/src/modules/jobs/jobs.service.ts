@@ -36,6 +36,74 @@ export class JobsService {
     }
   }
 
+  async createJob(recruiterId: string, jobData: Partial<Job>): Promise<Job | null> {
+    const { db } = await import('../../db/index.js');
+    const { jobs } = await import('../../db/schema.js');
+    if (!db) return null;
+    const id = randomUUID();
+    const now = new Date();
+
+    const [newJob] = await db.insert(jobs).values({
+      id,
+      title: jobData.title!,
+      description: jobData.description!,
+      companyName: jobData.companyName!,
+      location: jobData.location,
+      workplaceType: jobData.workplaceType,
+      employmentType: jobData.employmentType,
+      experienceLevel: jobData.experienceLevel,
+      salaryCurrency: jobData.salaryCurrency,
+      salaryMin: jobData.salaryMin?.toString(),
+      salaryMax: jobData.salaryMax?.toString(),
+      salaryPeriod: jobData.salaryPeriod,
+      recruiterId,
+      isActive: true,
+      postedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    } as any).returning();
+
+    return newJob as any as Job;
+  }
+
+  async getJobsByRecruiter(recruiterId: string): Promise<any[]> {
+    const { db } = await import('../../db/index.js');
+    const { jobs, applications } = await import('../../db/schema.js');
+    const { eq, sql } = await import('drizzle-orm');
+    if (!db) return [];
+    try {
+      const result = await db
+        .select({
+          id: jobs.id,
+          title: jobs.title,
+          description: jobs.description,
+          companyName: jobs.companyName,
+          location: jobs.location,
+          workplaceType: jobs.workplaceType,
+          employmentType: jobs.employmentType,
+          experienceLevel: jobs.experienceLevel,
+          salaryCurrency: jobs.salaryCurrency,
+          salaryMin: jobs.salaryMin,
+          salaryMax: jobs.salaryMax,
+          salaryPeriod: jobs.salaryPeriod,
+          isActive: jobs.isActive,
+          postedAt: jobs.postedAt,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
+          applicantCount: sql<number>`count(${applications.id})::int`,
+        })
+        .from(jobs)
+        .leftJoin(applications, eq(jobs.id, applications.jobId))
+        .where(eq(jobs.recruiterId, recruiterId))
+        .groupBy(jobs.id);
+
+      return result;
+    } catch (e) {
+      console.error('Error fetching jobs by recruiter:', e);
+      return [];
+    }
+  }
+
   async getRecommendations(userId: string): Promise<Job[]> {
     try {
       const { db } = await import('../../db/index.js');
@@ -48,7 +116,7 @@ export class JobsService {
 
       const profile: CandidateProfile = {
         name: profileData.name,
-        email: '', // Add missing property
+        email: '',
         headline: profileData.headline || undefined,
         yearsExperience: profileData.yearsExperience || 0,
         skills: profileData.skills || [],
@@ -114,7 +182,7 @@ export class JobsService {
         salaryMax: j.salaryMax ? Number(j.salaryMax) : undefined,
         salaryPeriod: j.salaryPeriod,
         applyUrl: j.applyUrl || '',
-        contactEmail: j.contactEmail,
+        contactEmail: j.contact_email,
         isActive: j.isActive,
         postedAt: j.postedAt,
         createdAt: j.createdAt,

@@ -5,6 +5,7 @@ import { ProfileInput } from './profile.schema.js';
 
 export async function getProfile(userId: string) {
   if (!db) return null;
+  console.log(`[ProfileService] Fetching profile for userId: ${userId}`);
   const [profile] = await db
     .select({
       id: profiles.id,
@@ -22,13 +23,19 @@ export async function getProfile(userId: string) {
       createdAt: profiles.createdAt,
       updatedAt: profiles.updatedAt,
       email: users.email,
+      role: users.role,
     })
-    .from(profiles)
-    .innerJoin(users, eq(profiles.userId, users.id))
-    .where(eq(profiles.userId, userId))
+    .from(users)
+    .leftJoin(profiles, eq(profiles.userId, users.id))
+    .where(eq(users.id, userId))
     .limit(1);
 
-  if (!profile) return null;
+  if (!profile) {
+    console.log(`[ProfileService] No profile/user found for userId: ${userId}`);
+    return null;
+  }
+
+  console.log(`[ProfileService] Found profile for ${profile.email}. Role: ${profile.role}`);
 
   // Check for main resume
   const [mainResume] = await db
@@ -126,6 +133,23 @@ export async function getRecruiterProfile(userId: string) {
     .where(eq(recruiters.userId, userId))
     .limit(1);
   return recruiter;
+}
+
+export async function getOrCreateRecruiterProfile(userId: string, email: string) {
+  if (!db) return null;
+  const existing = await getRecruiterProfile(userId);
+  if (existing) return existing;
+
+  const [created] = await db
+    .insert(recruiters)
+    .values({
+      userId,
+      email,
+      name: email.split('@')[0],
+      companyName: 'My Company',
+    })
+    .returning();
+  return created;
 }
 
 export async function updateRecruiterProfile(userId: string, data: any) {

@@ -17,7 +17,6 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const isWeb = Platform.OS === 'web';
   const isDesktop = width > 1024;
 
   const handlePickDocument = async () => {
@@ -34,15 +33,13 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       setError(null);
 
       const formData = new FormData();
-      // Use fetch to get blob for compatibility with Expo's new fetch implementation
       const blobResponse = await fetch(file.uri);
       const blob = await blobResponse.blob();
 
-      // Ensure the blob is explicitly marked as a PDF
       const pdfBlob = new Blob([blob], { type: 'application/pdf' });
       formData.append('file', pdfBlob, file.name);
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
         headers: {
@@ -59,7 +56,6 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
 
       const { extractedData } = await response.json();
 
-      // Navigate first, then close to ensure the modal state doesn't interfere
       router.push({
         pathname: '/job-form',
         params: { data: JSON.stringify(extractedData) }

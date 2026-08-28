@@ -1,11 +1,8 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const port = Number(process.env.PORT) || 4001;
+const port = Number(process.env.PORT) || 4000;
 console.log(`BOOTING BACKEND ON PORT ${port}...`);
-if (!process.env.PORT) {
-  console.log('NOTE: process.env.PORT is not defined, defaulting to 4001');
-}
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -16,6 +13,14 @@ import swaggerUi from '@fastify/swagger-ui';
 
 const fastify = Fastify({
   logger: true,
+});
+
+// Global error handlers to prevent silent crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err);
 });
 
 async function main() {
@@ -56,6 +61,14 @@ async function main() {
     const { applicationRoutes } = await import('./modules/applications/application.routes.js');
     const { jobsRoutes } = await import('./modules/jobs/jobs.routes.js');
 
+    // Run schema verification
+    try {
+      const { verifySchema } = await import('./db/index.js');
+      await verifySchema();
+    } catch (err) {
+      console.warn('Schema verification failed, continuing...', err);
+    }
+
     await fastify.register(profileRoutes, { prefix: '/api/profile' });
     await fastify.register(orchestratorRoutes, { prefix: '/api/orchestrator' });
     await fastify.register(resumeRoutes, { prefix: '/api/resume' });
@@ -63,21 +76,15 @@ async function main() {
     await fastify.register(jobsRoutes, { prefix: '/api/jobs' });
 
     await fastify.listen({ port, host: '0.0.0.0' });
-    console.log(`Server listening on port ${port}`);
+    console.log(`=========================================`);
+    console.log(`ApplyAI Backend active on port: ${port}`);
+    console.log(`=========================================`);
   } catch (err) {
     console.error('FATAL ERROR DURING STARTUP:');
     console.error(err);
     process.exit(1);
   }
 }
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('!!! Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('!!! Uncaught Exception:', err);
-});
 
 main().catch(err => {
   console.error('CRITICAL: main() failed with unhandled error:');

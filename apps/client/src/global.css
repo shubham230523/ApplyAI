@@ -14,6 +14,24 @@
 
   body {
     @apply text-[15px] leading-relaxed tracking-tight text-[#334155] bg-[#fafaf9] antialiased;
+    overflow-x: hidden;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
   }
 }
 

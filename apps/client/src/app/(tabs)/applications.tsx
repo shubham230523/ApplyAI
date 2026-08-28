@@ -17,7 +17,6 @@ export default function ApplicationsScreen() {
   const isMobile = width < 768;
 
   const fetchApplications = async () => {
-    if (!session) return;
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
     try {
       const response = await fetch(`${apiUrl}/api/applications`, {

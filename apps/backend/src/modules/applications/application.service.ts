@@ -110,4 +110,64 @@ export class ApplicationService {
     .limit(1);
     return result || null;
   }
+
+  async getApplicationsByJob(jobId: string, recruiterId: string) {
+    const { db } = await import('../../db/index.js');
+    const { applications, jobs, profiles, users } = await import('../../db/schema.js');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    if (!db) return [];
+
+    // Ensure job belongs to recruiter
+    const [job] = await db.select().from(jobs).where(and(eq(jobs.id, jobId), eq(jobs.recruiterId, recruiterId))).limit(1);
+    if (!job) throw new Error('Job not found or unauthorized');
+
+    return db.select({
+      id: applications.id,
+      status: applications.status,
+      appliedAt: applications.appliedAt,
+      matchScore: applications.matchScore,
+      candidateName: profiles.name,
+      candidateEmail: users.email,
+      candidateImageUrl: profiles.profileImageUrl,
+    })
+    .from(applications)
+    .innerJoin(users, eq(applications.userId, users.id))
+    .leftJoin(profiles, eq(applications.userId, profiles.userId))
+    .where(eq(applications.jobId, jobId))
+    .orderBy(desc(applications.matchScore), desc(applications.appliedAt));
+  }
+
+  async getRecruiterApplicationDetail(applicationId: string, recruiterId: string) {
+    const { db } = await import('../../db/index.js');
+    const { applications, jobs, profiles, users, resumes } = await import('../../db/schema.js');
+    const { eq, and } = await import('drizzle-orm');
+    if (!db) throw new Error('Database connection not available');
+
+    const result = await db.select({
+      id: applications.id,
+      status: applications.status,
+      appliedAt: applications.appliedAt,
+      aiCoverLetter: applications.aiCoverLetter,
+      aiAnswers: applications.aiAnswers,
+      jobTitle: jobs.title,
+      candidateName: profiles.name,
+      candidateEmail: users.email,
+      candidatePhone: profiles.phone,
+      candidateHeadline: profiles.headline,
+      candidateSkills: profiles.skills,
+      candidateImageUrl: profiles.profileImageUrl,
+      resumeUrl: resumes.fileUrl,
+      resumeParsedContent: resumes.parsedContent,
+    })
+    .from(applications)
+    .innerJoin(jobs, eq(applications.jobId, jobs.id))
+    .innerJoin(users, eq(applications.userId, users.id))
+    .leftJoin(profiles, eq(applications.userId, profiles.userId))
+    .leftJoin(resumes, eq(applications.resumeId, resumes.id))
+    .where(and(eq(applications.id, applicationId), eq(jobs.recruiterId, recruiterId)))
+    .limit(1);
+
+    return result[0] || null;
+  }
 }

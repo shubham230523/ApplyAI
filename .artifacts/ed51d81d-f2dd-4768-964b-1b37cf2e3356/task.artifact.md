@@ -1,0 +1,7 @@
+- `[/]` Implement AI Candidate Ranking (Backend)
+    - `[ ]` Add `matchScore` to `applications` table in schema
+    - `[ ]` Update `verifySchema` to add `match_score` column
+    - `[ ]` Implement `calculateMatchScore` in `AIService` (using Gemini 3.5 Flash Lite)
+    - `[ ]` Update `applyToJob` to calculate and save match score
+    - `[ ]` Update `getApplicationsByJob` to return and sort by match score
+- `[ ]` Update `JobApplicantsScreen` UI with Rank and Score

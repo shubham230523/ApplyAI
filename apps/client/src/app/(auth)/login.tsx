@@ -6,7 +6,8 @@ import { Icon } from '@/components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
-  const { role } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const role = params.role as string;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export default function LoginScreen() {
   async function signInWithEmail() {
     if (!email || !password) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -23,8 +24,10 @@ export default function LoginScreen() {
     if (error) {
       alert(error.message);
     } else {
-      // replace ensures the login screen is popped from the backstack
-      router.replace(role === 'recruiter' ? '/workspace' : '/assistant');
+      // We no longer redirect manually here.
+      // The RootLayout will handle redirection automatically once the AuthProvider
+      // verifies the true role from the backend database.
+      console.log('Login successful, waiting for role verification...');
     }
     setLoading(false);
   }
@@ -42,7 +45,12 @@ export default function LoginScreen() {
                 <Icon name="sparkles.fill" size={32} color="white" />
               </View>
               <Text className="text-3xl font-black text-slate-900 tracking-tighter">ApplyAI</Text>
-              <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px] mt-2">Intelligence recruitment</Text>
+              <View className="flex-row items-center mt-2">
+                <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px]">Sign in as </Text>
+                <View className={`px-2 py-0.5 rounded ${role === 'recruiter' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
+                   <Text className="text-white font-black text-[9px] uppercase tracking-wider">{role || 'candidate'}</Text>
+                </View>
+              </View>
             </View>
 
             <View className="space-y-5">

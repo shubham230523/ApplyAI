@@ -38,4 +38,40 @@ export async function applicationRoutes(fastify: FastifyInstance) {
     }
     return application;
   });
+
+  fastify.get('/job/:jobId', { preHandler: [authenticate] }, async (request, reply) => {
+    const { jobId } = request.params as { jobId: string };
+    const { getOrCreateRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
+
+    const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
+    const recruiter = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
+
+    if (!recruiter) {
+      return reply.status(403).send({ error: 'Recruiter profile not found' });
+    }
+
+    try {
+      return await applicationService.getApplicationsByJob(jobId, recruiter.id);
+    } catch (err: any) {
+      return reply.status(400).send({ error: err.message });
+    }
+  });
+
+  fastify.get('/recruiter-detail/:id', { preHandler: [authenticate] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { getOrCreateRecruiterProfile, getOrCreateUser } = await import('../profiles/profile.service.js');
+
+    const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
+    const recruiter = await getOrCreateRecruiterProfile(dbUser.id, request.user.email);
+
+    if (!recruiter) {
+      return reply.status(403).send({ error: 'Recruiter profile not found' });
+    }
+
+    const application = await applicationService.getRecruiterApplicationDetail(id, recruiter.id);
+    if (!application) {
+      return reply.status(404).send({ error: 'Application not found' });
+    }
+    return application;
+  });
 }

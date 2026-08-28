@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@applyai/shared-types": ["../../packages/shared-types/src/index"]
     }
   },
   "ts-node": {

@@ -76,7 +76,7 @@ export default function TabsLayout() {
   const fetchProfile = async () => {
     if (!session) return;
     setLoadingProfile(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
     try {
       const response = await fetch(`${apiUrl}/api/profile`, {
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
@@ -109,14 +109,12 @@ export default function TabsLayout() {
 
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
     try {
       const formData = new FormData();
-      // Use fetch to get blob for compatibility with Expo's new fetch implementation
       const response = await fetch(asset.uri);
       const blob = await response.blob();
 
-      // Detect mimetype: priority to blob.type, then asset.mimeType, then URI extension
       let mimeType = blob.type;
       if (!mimeType || mimeType === 'text/plain' || mimeType === 'application/octet-stream') {
         mimeType = asset.mimeType || (asset.uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
@@ -150,15 +148,13 @@ export default function TabsLayout() {
       const file = result.assets[0];
 
       const formData = new FormData();
-      // Use fetch to get blob for compatibility with Expo's new fetch implementation
       const response = await fetch(file.uri);
       const blob = await response.blob();
 
-      // Ensure the blob is explicitly marked as a PDF
       const pdfBlob = new Blob([blob], { type: 'application/pdf' });
       formData.append('file', pdfBlob, file.name);
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4001';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       const uploadResponse = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
         body: formData,
@@ -167,10 +163,7 @@ export default function TabsLayout() {
 
       const data = await uploadResponse.json();
       if (uploadResponse.ok) {
-        // Navigate first
         router.push({ pathname: '/job-form', params: { data: JSON.stringify(data.extractedData) } });
-
-        // Then close drawer
         setTimeout(() => {
           setRightDrawerOpen(false);
         }, 100);

@@ -18,6 +18,7 @@ export interface Job {
   salaryPeriod?: 'HOURLY' | 'MONTHLY' | 'YEARLY';
   applyUrl?: string;
   contactEmail?: string;
+  recruiterId?: string;
   isActive?: boolean;
   postedAt: Date | string;
   expiresAt?: Date | string;

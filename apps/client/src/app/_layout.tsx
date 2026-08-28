@@ -23,16 +23,15 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
-  // Update browser tab title based on branch
+  // Update browser tab title based on branch on Web
   useEffect(() => {
     if (Platform.OS === 'web') {
       const branch = process.env.EXPO_PUBLIC_GIT_BRANCH;
       const baseTitle = 'ApplyAI';
       const fullTitle = branch ? `${baseTitle} (${branch})` : baseTitle;
 
-      console.log(`[TabTitle] Setting title to: ${fullTitle} (Branch: ${branch})`);
+      console.log(`[TabTitle] Setting title to: ${fullTitle}`);
 
-      // Update immediately and again after a short delay to override Expo Router's automatic title
       document.title = fullTitle;
       const timeout = setTimeout(() => {
         document.title = fullTitle;
@@ -40,7 +39,7 @@ function RootLayoutNav() {
 
       return () => clearTimeout(timeout);
     }
-  }, [segments]); // Re-run on every navigation
+  }, [segments]);
 
   useEffect(() => {
     if (loading) return;
@@ -56,13 +55,18 @@ function RootLayoutNav() {
          router.replace('/');
       }
     } else {
+      if (loading) return;
+
       if (role === 'recruiter') {
-        if (!inRecruiterGroup && !isPublicRoute && !isAtSelectionScreen) {
+        if (inCandidateGroup || inAuthGroup || isAtSelectionScreen) {
           router.replace('/workspace');
         }
+      } else if (role === 'candidate') {
+        if (inRecruiterGroup || inAuthGroup || isAtSelectionScreen) {
+          router.replace('/assistant');
+        }
       } else {
-        // Allow candidates to access (tabs) group AND the job-form/job details
-        if (!inCandidateGroup && !isPublicRoute && !isAtSelectionScreen) {
+        if (inAuthGroup || isAtSelectionScreen) {
           router.replace('/assistant');
         }
       }
@@ -84,7 +88,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: '#fafaf9' }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <RootLayoutNav />

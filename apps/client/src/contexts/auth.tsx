@@ -19,19 +19,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [hasVerified, setHasVerified] = useState(false);
 
   useEffect(() => {
+    const fetchTrueRole = async (session: Session) => {
+      if (hasVerified) {
+        setVerifying(false);
+        return;
+      }
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
+      // setVerifying is now handled by the caller to avoid state gaps
+      try {
+        console.log('Verifying true role from backend...');
+        const response = await fetch(`${apiUrl}/api/profile`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (response.ok) {
+          const profile = await response.json();
+          if (profile && profile.role) {
+            console.log('Verified True Role from DB:', profile.role);
+            setRole(profile.role as UserRole);
+            setHasVerified(true);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to verify true role from backend:', e);
+      } finally {
+        setVerifying(false);
+      }
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setRole((session?.user?.user_metadata?.role as UserRole) ?? null);
+      if (session) {
+        const metadataRole = (session.user.user_metadata?.role as UserRole) ?? null;
+        setRole(metadataRole);
+        // Start verification before setting loading to false
+        setVerifying(true);
+        fetchTrueRole(session);
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setRole((session?.user?.user_metadata?.role as UserRole) ?? null);
+      if (session) {
+        const userRole = (session.user.user_metadata?.role as UserRole) ?? null;
+        if (!hasVerified) {
+          setRole(userRole);
+        }
+        setVerifying(true);
+        fetchTrueRole(session);
+      } else {
+        setRole(null);
+        setHasVerified(false);
+        setVerifying(false);
+      }
       setLoading(false);
     });
 
@@ -46,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, role, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, role, loading: loading || (verifying && !hasVerified), signOut }}>
       {children}
     </AuthContext.Provider>
   );
