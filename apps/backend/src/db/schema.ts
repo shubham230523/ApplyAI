@@ -85,6 +85,7 @@ export const applications = pgTable('applications', {
   resumeId: uuid('resume_id').references(() => resumes.id),
   aiCoverLetter: text('ai_cover_letter'),
   aiAnswers: jsonb('ai_answers'),
+  matchScore: integer('match_score').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

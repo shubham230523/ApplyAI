@@ -43,23 +43,32 @@ export class ApplicationService {
       return existing;
     }
 
-    // 3. Generate AI Cover Letter
+    // 3. Generate AI Cover Letter and Match Score
     const profile = resume.parsedContent as unknown as CandidateProfile;
     let coverLetter = "Strategic application submitted.";
+    let matchScore = 50;
+
     try {
-       coverLetter = await aiService.generateCoverLetter(profile, job.description);
+       const [clResult, scoreResult] = await Promise.all([
+         aiService.generateCoverLetter(profile, job.description),
+         aiService.calculateMatchScore(job.description, profile)
+       ]);
+       coverLetter = clResult;
+       matchScore = scoreResult.score;
+       console.log(`[ApplicationService] AI Score calculated: ${matchScore}%`);
     } catch (aiErr) {
-       console.warn('[ApplicationService] AI Cover Letter generation failed, using default.');
+       console.warn('[ApplicationService] AI evaluation failed, using defaults.', aiErr);
     }
 
     // 4. Save Application
-    console.log(`[ApplicationService] Inserting application for User: ${userId}, Job: ${jobId}, Resume: ${resume.id}`);
+    console.log(`[ApplicationService] Inserting application for User: ${userId}, Job: ${jobId}, Resume: ${resume.id}, Score: ${matchScore}`);
 
     const [application] = await db.insert(applications).values({
       userId,
       jobId,
       resumeId: resume.id,
       aiCoverLetter: coverLetter,
+      matchScore: matchScore,
       status: 'applied',
       appliedAt: new Date(),
     }).returning();
@@ -127,6 +136,7 @@ export class ApplicationService {
       id: applications.id,
       status: applications.status,
       appliedAt: applications.appliedAt,
+      matchScore: applications.matchScore,
       candidateName: profiles.name,
       candidateEmail: users.email,
       candidateImageUrl: profiles.profileImageUrl,
@@ -135,7 +145,7 @@ export class ApplicationService {
     .innerJoin(users, eq(applications.userId, users.id))
     .leftJoin(profiles, eq(applications.userId, profiles.userId))
     .where(eq(applications.jobId, jobId))
-    .orderBy(desc(applications.appliedAt));
+    .orderBy(desc(applications.matchScore), desc(applications.appliedAt));
   }
 
   async getRecruiterApplicationDetail(applicationId: string, recruiterId: string) {

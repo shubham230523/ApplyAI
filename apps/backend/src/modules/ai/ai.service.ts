@@ -75,6 +75,7 @@ export class AIService {
       });
 
       const content = result.text.trim();
+      console.error("match score: ", content)
 
       if (jsonSchema) {
         try {
@@ -322,8 +323,34 @@ export class AIService {
     }
   }
 
-  async calculateMatchScore(jd: string, profile: CandidateProfile): Promise<{ score: number; feedback: string }> {
-    return { score: 85, feedback: "Good match." };
+  async calculateMatchScore(jd: string, profile: CandidateProfile): Promise<{ score: number; reasoning: string }> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert technical recruiter. Evaluate the match between a Job Description and a Candidate's Profile.
+        Provide a match score (0-100) and a brief reasoning.`
+      },
+      {
+        role: 'user',
+        content: `JD: ${jd}\n\nCandidate Profile: ${JSON.stringify(profile)}`
+      }
+    ];
+
+    const scoreSchema = {
+      type: 'object',
+      properties: {
+        score: { type: 'number', description: 'Match percentage from 0 to 100' },
+        reasoning: { type: 'string', description: 'Brief explanation of the score' }
+      },
+      required: ['score', 'reasoning']
+    };
+
+    try {
+      return await this.callAI(messages, scoreSchema);
+    } catch (e) {
+      console.error('Match Score Calculation Error:', e);
+      return { score: 50, reasoning: "Score could not be calculated. Evaluation error." };
+    }
   }
 
   async generateCoverLetter(profile: CandidateProfile, jd: string): Promise<string> {

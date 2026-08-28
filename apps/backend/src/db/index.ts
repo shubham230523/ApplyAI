@@ -78,6 +78,9 @@ export async function verifySchema() {
 
     try { await client`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS recruiter_id UUID REFERENCES recruiters(id);`; } catch (e) {}
 
+    // Ensure applications table has match_score
+    try { await client`ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_score INTEGER DEFAULT 0;`; } catch (e) {}
+
     console.log('[Database] Schema verification complete.');
   } catch (err: any) {
     console.warn('[Database] Schema verification non-fatal error:', err.message || err);
