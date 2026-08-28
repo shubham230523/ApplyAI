@@ -70,7 +70,7 @@ export class AIService {
 
     try {
       const result = await this.client.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: finalPrompt
       });
 
@@ -332,6 +332,34 @@ export class AIService {
       { role: 'user', content: `JD: ${jd}\nProfile: ${JSON.stringify(profile)}` }
     ];
     return await this.callAI(messages);
+  }
+
+  async generateJobDescription(params: any): Promise<string> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert HR and technical recruiter. Create a professional, engaging, and detailed job description.
+        Include: Role Summary, Key Responsibilities, Required Technical Skills, and Soft Skills.
+        Keep it professional yet modern.`
+      },
+      {
+        role: 'user',
+        content: `Generate a JD for:
+        Title: ${params.title}
+        Company: ${params.companyName}
+        Location: ${params.location}
+        Model: ${params.workplaceType}
+        Type: ${params.employmentType}
+        Seniority: ${params.experienceLevel}`
+      }
+    ];
+
+    try {
+      return await this.callAI(messages);
+    } catch (e) {
+      console.error('JD Generation Error:', e);
+      return "Failed to generate job description. Please try again.";
+    }
   }
 
   async generateResponse(query: string, count: number, params: JobSearchParams): Promise<string> {

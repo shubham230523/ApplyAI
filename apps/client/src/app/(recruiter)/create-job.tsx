@@ -9,6 +9,7 @@ export default function CreateJobScreen() {
   const { session } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [generatingJD, setGeneratingJD] = useState(false);
   const { width } = useWindowDimensions();
   const isDesktop = width > 1024;
 
@@ -60,6 +61,39 @@ export default function CreateJobScreen() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleGenerateJD = async () => {
+    if (!form.title || !form.companyName) {
+      Alert.alert('Details Needed', 'Please enter a Job Title and Company Name first.');
+      return;
+    }
+
+    setGeneratingJD(true);
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
+
+    try {
+      const response = await fetch(`${apiUrl}/api/jobs/generate-jd`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (response.ok) {
+        const { description } = await response.json();
+        setForm(f => ({ ...f, description }));
+      } else {
+        throw new Error('Failed to generate description');
+      }
+    } catch (error) {
+      console.error('JD Generation error:', error);
+      Alert.alert('AI Error', 'Could not generate description. Please try again.');
+    } finally {
+      setGeneratingJD(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -249,7 +283,24 @@ export default function CreateJobScreen() {
 
             {/* Description */}
             <View className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40">
-              <Text className="text-slate-900 text-2xl font-black mb-10 tracking-tight">Role Details</Text>
+              <View className="flex-row justify-between items-center mb-10">
+                <Text className="text-slate-900 text-2xl font-black tracking-tight">Role Details</Text>
+
+                <TouchableOpacity
+                  onPress={handleGenerateJD}
+                  disabled={generatingJD}
+                  className="bg-indigo-50 px-5 py-2.5 rounded-2xl flex-row items-center border border-indigo-100 active:bg-indigo-100"
+                >
+                  {generatingJD ? (
+                    <ActivityIndicator size="small" color="#4f46e5" />
+                  ) : (
+                    <>
+                      <Icon name="sparkles.fill" size={14} color="#4f46e5" />
+                      <Text className="ml-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest">Draft with AI</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
               {renderInput('Job Description', form.description, 'description', 'Define the mission, technical stack, and day-to-day impact...', 'default', true, true)}
             </View>
           </View>

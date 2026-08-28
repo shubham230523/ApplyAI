@@ -1,8 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { JobsService } from './jobs.service.js';
 import { authenticate } from '../../common/auth.middleware.js';
+import { AIService } from '../ai/ai.service.js';
 
 const jobsService = new JobsService();
+const aiService = new AIService();
 
 export async function jobsRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -43,6 +45,21 @@ export async function jobsRoutes(fastify: FastifyInstance) {
 
       const job = await jobsService.createJob(recruiter.id, request.body as any);
       return job;
+    }
+  );
+
+  fastify.post(
+    '/generate-jd',
+    {
+      preHandler: [authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const jd = await aiService.generateJobDescription(request.body);
+        return { description: jd };
+      } catch (err: any) {
+        return reply.status(500).send({ error: 'Failed to generate job description' });
+      }
     }
   );
 

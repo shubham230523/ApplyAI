@@ -1,45 +1,33 @@
-# Implementation Plan: Recruiter Applicant Management
+# Implementation Plan: Resume Access and AI JD Generation
 
-This plan outlines the steps to allow recruiters to view applicants for their jobs and drill down into specific application details.
+This plan outlines the changes to allow recruiters to view candidate resumes and use AI to generate job descriptions.
 
 ## Proposed Changes
 
 ### Backend (Node.js/Fastify)
 
 #### [MODIFY] [application.service.ts](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/backend/src/modules/applications/application.service.ts)
-- Add `getApplicationsByJob(jobId: string, recruiterId: string)`: Retrieves a list of applications for a specific job, ensuring the job belongs to the recruiter. Joins with `profiles` to get candidate names.
-- Add `getRecruiterApplicationDetail(applicationId: string, recruiterId: string)`: Retrieves full details of an application, including the AI cover letter and the candidate's parsed resume content.
+- Update `getRecruiterApplicationDetail` to include the `fileUrl` from the joined `resumes` table. This provides the recruiter with a direct link to the candidate's uploaded resume.
 
-#### [MODIFY] [application.routes.ts](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/backend/src/modules/applications/application.routes.ts)
-- Add `GET /job/:jobId`: Endpoint for recruiters to fetch applicants for a job.
-- Add `GET /recruiter-detail/:id`: Endpoint for recruiters to fetch full application details.
-- Integrate with `profile.service` to verify recruiter identity.
+#### [MODIFY] [ai.service.ts](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/backend/src/modules/ai/ai.service.ts)
+- Add `generateJobDescription(params: any)`: A new method that uses Gemini to draft a professional job description based on the title, company, location, and employment details provided in the form.
+
+#### [MODIFY] [jobs.routes.ts](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/backend/src/modules/jobs/jobs.routes.ts)
+- Add `POST /generate-jd`: A new authenticated endpoint that calls the `AIService` to generate a JD draft.
 
 ### Frontend (React Native/Expo Router)
 
-#### [MODIFY] [workspace.tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/workspace.tsx)
-- Update the job card `onPress` to navigate to `/(recruiter)/job-applications/[jobId]`.
-- (Optional) Update the "Total Applicants" statistic to reflect actual data if possible.
+#### [MODIFY] [application-detail/[id].tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/application-detail/[id].tsx)
+- Add a "View Full Resume (PDF)" button in the candidate profile section.
+- Use `Linking` or a web browser to open the resume URL.
 
-#### [NEW] [job-applications/[id].tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/job-applications/[id].tsx)
-- New screen to display a list of all candidates who applied for a specific job.
-- Each entry will show candidate name, application date, and a link to view details.
-
-#### [NEW] [application-detail/[id].tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/application-detail/[id].tsx)
-- New screen to show the full application for a recruiter.
-- Displays the AI-generated cover letter and the candidate's resume/profile details.
-
-#### [MODIFY] [_layout.tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/_layout.tsx)
-- Register the new routes in the Recruiter stack.
+#### [MODIFY] [create-job.tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/create-job.tsx)
+- Add a "✨ Draft with AI" button above the Job Description text field.
+- Implement the logic to send current form data to the new backend endpoint and update the `description` field with the result.
+- Show a loading state while the AI is thinking.
 
 ## Verification Plan
 
-### Automated Tests
-- No new automated tests planned; manual verification will be used.
-
 ### Manual Verification
-- Log in as a recruiter.
-- Navigate to the Workspace.
-- Click on a job that has applicants (need to apply as a candidate first).
-- Verify the list of applicants is displayed correctly.
-- Click on an applicant and verify the detail screen shows the cover letter and resume info.
+1. **Resume Link**: Log in as a recruiter, open an application, and click the "View Full Resume" button. Verify it opens the correct PDF in a new tab or browser.
+2. **AI JD Generation**: Open the "Post New Job" screen. Fill in "Senior React Developer" at "Google". Click "Draft with AI". Verify that a professional job description is generated and filled into the text area.

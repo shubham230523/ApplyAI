@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl, Platform, useWindowDimensions, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth';
@@ -110,6 +110,19 @@ export default function ApplicationDetailScreen() {
                   <Text className="text-slate-900 font-bold">{application.candidatePhone || 'Not provided'}</Text>
                 </View>
               </View>
+
+              {application.resumeUrl && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(application.resumeUrl)}
+                  className="mt-8 bg-slate-50 p-5 rounded-2xl border border-slate-100 flex-row items-center justify-between active:bg-slate-100"
+                >
+                  <View className="flex-row items-center">
+                    <Icon name="doc.badge.plus" size={20} color="#059669" />
+                    <Text className="ml-3 text-slate-900 font-bold">View Full Resume (PDF)</Text>
+                  </View>
+                  <Icon name="link" size={16} color="#94a3b8" />
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* AI Cover Letter */}

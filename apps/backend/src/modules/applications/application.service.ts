@@ -154,6 +154,7 @@ export class ApplicationService {
       candidateHeadline: profiles.headline,
       candidateSkills: profiles.skills,
       candidateImageUrl: profiles.profileImageUrl,
+      resumeUrl: resumes.fileUrl,
       resumeParsedContent: resumes.parsedContent,
     })
     .from(applications)
