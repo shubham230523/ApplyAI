@@ -6,7 +6,8 @@ import { Icon } from '@/components/ui/icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
-  const { role } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const role = params.role as string;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,13 +15,17 @@ export default function RegisterScreen() {
 
   async function signUpWithEmail() {
     if (!email || !password) return;
+    const selectedRole = role === 'recruiter' ? 'recruiter' : 'candidate';
     setLoading(true);
+
+    console.log('Signing up with role:', selectedRole);
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          role: role || 'candidate',
+          role: selectedRole,
         }
       }
     });
@@ -47,7 +52,12 @@ export default function RegisterScreen() {
                 <Icon name="person.fill" size={32} color="white" />
               </View>
               <Text className="text-3xl font-black text-slate-900 tracking-tighter">Join ApplyAI</Text>
-              <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px] mt-2">Start your journey</Text>
+              <View className="flex-row items-center mt-2">
+                <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-[3px]">Join as </Text>
+                <View className={`px-2 py-0.5 rounded ${role === 'recruiter' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
+                   <Text className="text-white font-black text-[9px] uppercase tracking-wider">{role || 'candidate'}</Text>
+                </View>
+              </View>
             </View>
 
             <View className="space-y-5">
@@ -91,7 +101,7 @@ export default function RegisterScreen() {
             </View>
 
             <View className="mt-10 items-center border-t border-slate-50 pt-10">
-              <Link href="/login" asChild>
+              <Link href={{ pathname: "/login", params: { role } }} asChild>
                 <TouchableOpacity>
                   <Text className="text-slate-400 text-xs font-semibold">
                     Already have an account? <Text className="text-indigo-600 font-bold">Sign In</Text>

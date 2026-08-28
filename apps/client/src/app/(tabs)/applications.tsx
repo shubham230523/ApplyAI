@@ -15,7 +15,7 @@ export default function ApplicationsScreen() {
   const isMobile = width < 768;
 
   const fetchApplications = async () => {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
     try {
       const response = await fetch(`${apiUrl}/api/applications`);
       if (!response.ok) throw new Error('Failed to fetch');

@@ -51,7 +51,9 @@ async function main() {
 
     const port = Number(process.env.PORT) || 4000;
     await fastify.listen({ port, host: '0.0.0.0' });
-    console.log(`Server listening on port ${port}`);
+    console.log(`=========================================`);
+    console.log(`ApplyAI Backend active on port: ${port}`);
+    console.log(`=========================================`);
   } catch (err) {
     console.error('FATAL ERROR DURING STARTUP:');
     console.error(err);

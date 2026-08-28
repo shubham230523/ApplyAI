@@ -12,6 +12,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const role = request.user.user_metadata?.role || 'candidate';
+      console.log(`[ProfileRoute] GET / request from sub: ${request.user.sub}, email: ${request.user.email}, metadata role: ${role}`);
       const dbUser = await getOrCreateUser(request.user.sub, request.user.email, role);
       const profile = await getProfile(dbUser.id);
       return profile || null;

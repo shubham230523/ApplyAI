@@ -53,7 +53,7 @@ export default function JobFormScreen() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
       try {
         const response = await fetch(`${apiUrl}/api/profile`, {
           headers: {
@@ -140,7 +140,7 @@ export default function JobFormScreen() {
 
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
     try {
       const formData = new FormData();
       // Use fetch to get blob for compatibility with Expo's new fetch implementation
@@ -188,7 +188,7 @@ export default function JobFormScreen() {
     }
 
     setLoading(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
 
     try {
       const payload = {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, ScrollView, RefreshControl, Platform } from 'react-native';
 import { useAuth } from '@/contexts/auth';
 import { Icon } from '@/components/ui/icon';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,7 @@ export default function RecruiterDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
     try {
       const [profileRes, jobsRes] = await Promise.all([
         fetch(`${apiUrl}/api/profile/recruiter`, {
@@ -61,6 +61,7 @@ export default function RecruiterDashboard() {
   };
 
   const displayName = profile?.name || user?.email?.split('@')[0] || 'Recruiter';
+  const companyName = profile?.companyName || 'Your Company';
 
   if (loading && !refreshing) {
     return (
@@ -73,96 +74,156 @@ export default function RecruiterDashboard() {
   return (
     <SafeAreaView className="flex-1 bg-[#fafaf9]">
       {/* Header */}
-      <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row justify-between items-center z-10">
+      <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row justify-between items-center z-10 shadow-sm shadow-slate-200/50">
         <View className="flex-row items-center">
-          <View className="w-8 h-8 bg-emerald-600 rounded-lg items-center justify-center mr-3 shadow-sm">
-            <Icon name="briefcase.fill" size={16} color="white" />
+          <View className="w-9 h-9 bg-emerald-600 rounded-xl items-center justify-center mr-3 shadow-lg shadow-emerald-200/50">
+            <Icon name="briefcase.fill" size={18} color="white" />
           </View>
-          <Text className="text-xl font-black text-slate-900 tracking-tighter">ApplyAI</Text>
-          <View className="ml-2 px-2 py-0.5 bg-emerald-50 rounded-md border border-emerald-100">
-            <Text className="text-[10px] font-black text-emerald-700 uppercase">Recruiter</Text>
+          <View>
+            <Text className="text-xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: 'Geist' }}>ApplyAI</Text>
+            <Text className="text-[9px] font-black text-emerald-600 uppercase tracking-[2px] -mt-1">Workspace</Text>
           </View>
         </View>
 
-        <TouchableOpacity onPress={handleSignOut} className="flex-row items-center px-3 py-2 rounded-xl active:bg-red-50">
+        <TouchableOpacity onPress={handleSignOut} className="flex-row items-center px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-100 active:scale-95 transition-all">
           <Icon name="rectangle.portrait.and.arrow.right" size={16} color="#ef4444" />
-          <Text className="ml-2 text-xs font-bold text-red-500">Sign Out</Text>
+          <Text className="ml-2.5 text-xs font-bold text-red-500 uppercase tracking-widest">Exit</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, pb: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />}
+        showsVerticalScrollIndicator={false}
       >
-        <View className="w-full max-w-4xl mx-auto">
-          <View className="flex-row justify-between items-end mb-10">
+        <View className="w-full max-w-5xl mx-auto">
+          {/* Welcome Section */}
+          <View className="flex-row justify-between items-center mb-12">
             <View>
-              <Text className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Workspace</Text>
-              <Text className="text-4xl font-black text-slate-900 tracking-tight">Hi {displayName}</Text>
+              <View className="flex-row items-center mb-2">
+                <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
+                <Text className="text-gray-400 text-[10px] font-black uppercase tracking-[3px]">{companyName}</Text>
+              </View>
+              <Text className="text-5xl font-black text-slate-900 tracking-tight" style={{ fontFamily: 'Geist' }}>Hi {displayName}</Text>
+              <Text className="text-slate-400 text-sm font-medium mt-1">Manage your hiring pipeline and job listings.</Text>
             </View>
+
             <TouchableOpacity
               onPress={() => router.push('/(recruiter)/create-job')}
-              className="bg-emerald-600 px-6 py-4 rounded-2xl shadow-lg shadow-emerald-200 flex-row items-center active:scale-95"
+              className="bg-emerald-600 px-8 py-5 rounded-[24px] shadow-2xl shadow-emerald-200 flex-row items-center active:scale-[0.98] border-b-4 border-emerald-700"
             >
-              <Icon name="plus.circle.fill" size={18} color="white" />
-              <Text className="text-white font-black uppercase text-xs tracking-widest ml-2">Post Job</Text>
+              <Icon name="plus.circle.fill" size={20} color="white" />
+              <Text className="text-white font-black uppercase text-sm tracking-[2px] ml-3">New Job</Text>
             </TouchableOpacity>
           </View>
 
-          {jobs.length === 0 ? (
-            <View className="bg-white p-16 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50 items-center">
-              <View className="w-20 h-20 bg-emerald-50 rounded-3xl items-center justify-center mb-8">
-                <Icon name="sparkles.fill" size={40} color="#059669" />
-              </View>
-              <Text className="text-2xl font-bold text-slate-900 mb-3 text-center">No jobs posted yet</Text>
-              <Text className="text-slate-500 text-center text-lg max-w-md mb-10 leading-relaxed">
-                Start building your talent pipeline by posting your first job requirement.
-              </Text>
+          <View className="flex-row flex-wrap -mx-3">
+            {/* Stats Column */}
+            <View className="w-full lg:w-1/3 px-3 mb-8">
+               <View className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40">
+                  <Text className="text-slate-400 font-black text-[10px] uppercase tracking-widest mb-6">Pipeline Overview</Text>
 
-              <TouchableOpacity
-                onPress={() => router.push('/(recruiter)/create-job')}
-                className="bg-slate-900 px-10 py-5 rounded-2xl shadow-lg active:scale-95"
-              >
-                <Text className="text-white font-black uppercase tracking-widest text-sm">Create First Job</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View className="space-y-4">
-              <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-4 ml-1">Active Job Postings ({jobs.length})</Text>
-              {jobs.map((job) => (
-                <TouchableOpacity
-                  key={job.id}
-                  className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex-row items-center mb-4 active:bg-slate-50"
-                  onPress={() => {
-                    // Navigate to job details or applications
-                    // router.push(`/(recruiter)/job/${job.id}`);
-                  }}
-                >
-                  <View className="w-14 h-14 bg-slate-50 rounded-2xl items-center justify-center mr-5 border border-slate-100">
-                    <Icon name="briefcase.fill" size={24} color="#64748b" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-lg font-bold text-slate-900 mb-1">{job.title}</Text>
-                    <View className="flex-row items-center">
-                      <Icon name="mappin.circle" size={12} color="#94a3b8" />
-                      <Text className="text-slate-400 text-sm ml-1 font-medium">{job.location || 'Remote'}</Text>
-                      <View className="w-1 h-1 rounded-full bg-slate-300 mx-3" />
-                      <Text className="text-emerald-600 text-xs font-bold uppercase tracking-wider">{job.employmentType?.replace('_', ' ') || 'FULL TIME'}</Text>
+                  <View className="gap-6">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center">
+                        <View className="w-10 h-10 bg-blue-50 rounded-2xl items-center justify-center mr-4">
+                          <Icon name="doc.fill.badge.plus" size={18} color="#2563eb" />
+                        </View>
+                        <Text className="text-slate-600 font-bold">Active Jobs</Text>
+                      </View>
+                      <Text className="text-2xl font-black text-slate-900">{jobs.length}</Text>
+                    </View>
+
+                    <View className="flex-row items-center justify-between opacity-50">
+                      <View className="flex-row items-center">
+                        <View className="w-10 h-10 bg-indigo-50 rounded-2xl items-center justify-center mr-4">
+                          <Icon name="person.fill" size={18} color="#4f46e5" />
+                        </View>
+                        <Text className="text-slate-600 font-bold">Total Applicants</Text>
+                      </View>
+                      <Text className="text-2xl font-black text-slate-900">0</Text>
+                    </View>
+
+                    <View className="h-[1px] bg-slate-50 my-2" />
+
+                    <View className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                       <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pro Tip</Text>
+                       <Text className="text-slate-600 text-xs font-medium leading-relaxed">
+                         Detailed job descriptions help our AI find better matches for you.
+                       </Text>
                     </View>
                   </View>
-                  <View className="items-end">
-                    <View className="bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-                       <Text className="text-emerald-700 text-[10px] font-black uppercase">Active</Text>
-                    </View>
-                    <Text className="text-slate-300 text-[10px] mt-2 font-bold uppercase">Posted {new Date(job.postedAt).toLocaleDateString()}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+               </View>
             </View>
-          )}
+
+            {/* Jobs List Column */}
+            <View className="w-full lg:w-2/3 px-3">
+              {jobs.length === 0 ? (
+                <View className="bg-white p-16 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50 items-center">
+                  <View className="w-24 h-24 bg-emerald-50 rounded-[40px] items-center justify-center mb-10 rotate-6 shadow-inner shadow-emerald-100">
+                    <Icon name="sparkles.fill" size={48} color="#059669" />
+                  </View>
+                  <Text className="text-3xl font-black text-slate-900 mb-4 text-center tracking-tight">Ready to hire?</Text>
+                  <Text className="text-slate-500 text-center text-lg max-w-sm mb-12 leading-relaxed font-medium">
+                    Create your first job posting and let ApplyAI find the best talent for your team.
+                  </Text>
+
+                  <TouchableOpacity
+                    onPress={() => router.push('/(recruiter)/create-job')}
+                    className="bg-slate-900 px-12 py-6 rounded-[28px] shadow-2xl shadow-slate-300 active:scale-95"
+                  >
+                    <Text className="text-white font-black uppercase tracking-[3px] text-xs">Start Posting</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View>
+                  <View className="flex-row items-center justify-between mb-6 px-2">
+                    <Text className="text-slate-400 font-black text-[10px] uppercase tracking-[4px]">Live Postings</Text>
+                    <TouchableOpacity className="flex-row items-center">
+                       <Text className="text-emerald-600 font-bold text-xs mr-1">View All</Text>
+                       <Icon name="chevron.left" size={12} color="#059669" style={{ transform: [{ rotate: '180deg' }] }} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View className="gap-5">
+                    {jobs.map((job) => (
+                      <TouchableOpacity
+                        key={job.id}
+                        className="bg-white p-7 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/30 flex-row items-center active:scale-[0.99] active:bg-slate-50 transition-all"
+                        onPress={() => {
+                          // TODO: Implement job details view
+                        }}
+                      >
+                        <View className="w-16 h-16 bg-slate-50 rounded-3xl items-center justify-center mr-6 border border-slate-100/50 shadow-inner">
+                          <Icon name="briefcase.fill" size={28} color="#64748b" />
+                        </View>
+                        <View className="flex-1">
+                          <View className="flex-row items-center mb-1.5">
+                            <Text className="text-xl font-black text-slate-900 tracking-tight mr-3">{job.title}</Text>
+                            <View className="bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                               <Text className="text-emerald-700 text-[9px] font-black uppercase tracking-wider">Active</Text>
+                            </View>
+                          </View>
+                          <View className="flex-row items-center">
+                            <Icon name="mappin.circle" size={14} color="#94a3b8" />
+                            <Text className="text-slate-400 text-sm ml-1.5 font-bold tracking-tight">{job.location || 'Remote'}</Text>
+                            <View className="w-1 h-1 rounded-full bg-slate-200 mx-4" />
+                            <Text className="text-slate-400 text-sm font-bold tracking-tight">0 Applicants</Text>
+                          </View>
+                        </View>
+
+                        <View className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center border border-slate-100">
+                           <Icon name="chevron.left" size={16} color="#cbd5e1" style={{ transform: [{ rotate: '180deg' }] }} />
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
-        <View className="h-20" />
       </ScrollView>
     </SafeAreaView>
   );

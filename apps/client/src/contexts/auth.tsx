@@ -19,20 +19,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
+    const fetchTrueRole = async (session: Session) => {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
+      setVerifying(true);
+      try {
+        console.log('Verifying true role from backend...');
+        const response = await fetch(`${apiUrl}/api/profile`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (response.ok) {
+          const profile = await response.json();
+          if (profile && profile.role) {
+            console.log('Verified True Role from DB:', profile.role);
+            setRole(profile.role as UserRole);
+          } else {
+             console.warn('Backend returned profile but no role field found:', profile);
+          }
+        } else {
+           const errorText = await response.text();
+           console.error('Backend role check failed. Status:', response.status, 'Error:', errorText);
+        }
+      } catch (e) {
+        console.error('Failed to verify true role from backend:', e);
+      } finally {
+        setVerifying(false);
+      }
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setRole((session?.user?.user_metadata?.role as UserRole) ?? null);
+      const metadataRole = (session?.user?.user_metadata?.role as UserRole) ?? null;
+      setRole(metadataRole);
       setLoading(false);
+      if (session) fetchTrueRole(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setRole((session?.user?.user_metadata?.role as UserRole) ?? null);
+      const userRole = (session?.user?.user_metadata?.role as UserRole) ?? null;
+      console.log('Auth state change. Role from metadata:', userRole);
+      setRole(userRole);
       setLoading(false);
+      if (session) fetchTrueRole(session);
     });
 
     return () => subscription.unsubscribe();
@@ -46,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, role, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, role, loading: loading || verifying, signOut }}>
       {children}
     </AuthContext.Provider>
   );

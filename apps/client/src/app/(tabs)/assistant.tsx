@@ -64,7 +64,7 @@ export default function AssistantScreen() {
     const init = async () => {
       if (!session) return;
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
       try {
         const [profileRes, appliedRes] = await Promise.all([
           fetch(`${apiUrl}/api/profile`, {
@@ -153,7 +153,7 @@ export default function AssistantScreen() {
     setQuery('');
     setLoading(true);
 
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
 
     // Safety abort controller
     const controller = new AbortController();

@@ -22,10 +22,12 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
+  // Set the document title with branch name on Web
   useEffect(() => {
     if (Platform.OS === 'web') {
-      const branchName = process.env.EXPO_PUBLIC_GIT_BRANCH || 'unknown';
-      document.title = `ApplyAI [${branchName}]`;
+      const branchName = process.env.EXPO_PUBLIC_GIT_BRANCH;
+      const baseTitle = 'ApplyAI';
+      document.title = branchName ? `${baseTitle} | ${branchName}` : baseTitle;
     }
   }, []);
 
@@ -43,13 +45,22 @@ function RootLayoutNav() {
          router.replace('/');
       }
     } else {
+      // If we are still verifying the true role from the backend, don't redirect yet
+      // This prevents the "flash" of the candidate screen for recruiters
+      if (loading) return;
+
+      // Logged in users should be sent to their respective workspace if they try to access auth or selection screens
       if (role === 'recruiter') {
-        if (!inRecruiterGroup && !isPublicRoute && !isAtSelectionScreen) {
+        if (inCandidateGroup || inAuthGroup || isAtSelectionScreen) {
           router.replace('/workspace');
         }
+      } else if (role === 'candidate') {
+        if (inRecruiterGroup || inAuthGroup || isAtSelectionScreen) {
+          router.replace('/assistant');
+        }
       } else {
-        // Allow candidates to access (tabs) group AND the job-form/job details
-        if (!inCandidateGroup && !isPublicRoute && !isAtSelectionScreen) {
+        // If role is null (missing metadata), default to candidate but allow manual group access
+        if (inAuthGroup || isAtSelectionScreen) {
           router.replace('/assistant');
         }
       }
