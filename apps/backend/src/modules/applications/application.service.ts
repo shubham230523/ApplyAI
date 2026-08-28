@@ -1,89 +1,68 @@
-import { db } from '../../db/index.js';
-import { applications, jobs, resumes } from '../../db/schema.js';
-import { AIService } from '../ai/ai.service.js';
-import { eq, and, desc } from 'drizzle-orm';
 import { CandidateProfile } from '@applyai/shared-types';
-
-const aiService = new AIService();
 
 export class ApplicationService {
   async applyToJob(userId: string, jobId: string, customCoverLetter?: string) {
+    const { db } = await import('../../db/index.js');
+    const { applications, jobs, resumes } = await import('../../db/schema.js');
+    const { AIService } = await import('../ai/ai.service.js');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    const aiService = new AIService();
+
     if (!db) throw new Error('Database connection not available');
-    // 1. Fetch Job and User Profile/Resume
     const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
     if (!job) throw new Error('Job not found');
 
-    let [resume] = await db
-      .select()
-      .from(resumes)
-      .where(and(eq(resumes.userId, userId), eq(resumes.isMain, true)))
-      .limit(1);
-
+    let [resume] = await db.select().from(resumes).where(and(eq(resumes.userId, userId), eq(resumes.isMain, true))).limit(1);
     if (!resume) {
-      // Fallback: Use the most recently uploaded resume if no "Main" is set
-      [resume] = await db
-        .select()
-        .from(resumes)
-        .where(eq(resumes.userId, userId))
-        .orderBy(desc(resumes.createdAt))
-        .limit(1);
+      [resume] = await db.select().from(resumes).where(eq(resumes.userId, userId)).orderBy(desc(resumes.createdAt)).limit(1);
     }
-
     if (!resume) throw new Error('No resume found. Please upload a resume first.');
 
-    // 2. Check if already applied
-    const [existing] = await db
-      .select()
-      .from(applications)
-      .where(and(eq(applications.userId, userId), eq(applications.jobId, jobId)))
-      .limit(1);
+    const [existing] = await db.select().from(applications).where(and(eq(applications.userId, userId), eq(applications.jobId, jobId))).limit(1);
+    if (existing) return existing;
 
-    if (existing) {
-      console.log(`[ApplicationService] User ${userId} already applied to job ${jobId}`);
-      return existing;
-    }
-
-    // 3. Handle Cover Letter
+    const profile = resume.parsedContent as unknown as CandidateProfile;
     let coverLetter = customCoverLetter;
+    let matchResult = { score: 0, feedback: '' };
 
-    if (!coverLetter) {
-      const profile = resume.parsedContent as unknown as CandidateProfile;
-      coverLetter = "Strategic application submitted.";
-      try {
-         coverLetter = await aiService.generateCoverLetter(profile, job.description);
-      } catch (aiErr) {
-         console.warn('[ApplicationService] AI Cover Letter generation failed, using default.');
-      }
+    try {
+      const [aiCoverLetter, aiMatch] = await Promise.all([
+        !coverLetter ? aiService.generateCoverLetter(profile, job.description) : Promise.resolve(coverLetter),
+        aiService.calculateMatchScore(job, profile)
+      ]);
+      if (!coverLetter) coverLetter = aiCoverLetter;
+      matchResult = aiMatch;
+    } catch (aiErr) {
+      console.warn('[ApplicationService] AI analysis failed, using defaults.', aiErr);
+      if (!coverLetter) coverLetter = "Strategic application submitted.";
     }
-
-    // 4. Save Application
-    console.log(`[ApplicationService] Inserting application for User: ${userId}, Job: ${jobId}, Resume: ${resume.id}`);
 
     const [application] = await db.insert(applications).values({
       userId,
       jobId,
       resumeId: resume.id,
       aiCoverLetter: coverLetter,
+      matchScore: matchResult.score,
+      matchFeedback: matchResult.feedback,
       status: 'applied',
       appliedAt: new Date(),
     }).returning();
-
-    if (application) {
-      console.log(`[ApplicationService] Successfully saved application: ${application.id}`);
-    } else {
-      console.error('[ApplicationService] Failed to insert application - check database constraints');
-    }
 
     return application;
   }
 
   async getUserApplications(userId: string) {
+    const { db } = await import('../../db/index.js');
+    const { applications, jobs } = await import('../../db/schema.js');
+    const { eq, desc } = await import('drizzle-orm');
     if (!db) return [];
     return db.select({
       id: applications.id,
       jobId: applications.jobId,
       status: applications.status,
       appliedAt: applications.appliedAt,
+      matchScore: applications.matchScore,
       jobTitle: jobs.title,
       companyName: jobs.companyName,
       companyLogoUrl: jobs.companyLogoUrl,
@@ -96,8 +75,10 @@ export class ApplicationService {
   }
 
   async getApplicationById(userId: string, applicationId: string) {
+    const { db } = await import('../../db/index.js');
+    const { applications, jobs } = await import('../../db/schema.js');
+    const { eq, and } = await import('drizzle-orm');
     if (!db) throw new Error('Database connection not available');
-
     const [result] = await db.select({
       id: applications.id,
       jobId: applications.jobId,
@@ -105,6 +86,8 @@ export class ApplicationService {
       appliedAt: applications.appliedAt,
       aiCoverLetter: applications.aiCoverLetter,
       aiAnswers: applications.aiAnswers,
+      matchScore: applications.matchScore,
+      matchFeedback: applications.matchFeedback,
       resumeId: applications.resumeId,
       jobTitle: jobs.title,
       companyName: jobs.companyName,
@@ -116,7 +99,6 @@ export class ApplicationService {
     .innerJoin(jobs, eq(applications.jobId, jobs.id))
     .where(and(eq(applications.id, applicationId), eq(applications.userId, userId)))
     .limit(1);
-
     return result || null;
   }
 }

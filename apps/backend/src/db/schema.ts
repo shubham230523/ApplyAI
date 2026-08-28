@@ -84,6 +84,16 @@ export const applications = pgTable('applications', {
   resumeId: uuid('resume_id').references(() => resumes.id),
   aiCoverLetter: text('ai_cover_letter'),
   aiAnswers: jsonb('ai_answers'),
+  matchScore: integer('match_score').default(0),
+  matchFeedback: text('match_feedback'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const userSearches = pgTable('user_searches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  query: text('query').notNull(),
+  params: jsonb('params'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

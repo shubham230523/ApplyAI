@@ -392,4 +392,32 @@ export class AIService {
   async searchJobsWithAI(query: string, params: JobSearchParams): Promise<any[]> {
     return [];
   }
+
+  async generateSearchParametersFromProfile(profile: CandidateProfile): Promise<JobSearchParams> {
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a career matching AI. Based on the candidate's profile, generate ideal job search parameters.
+        Focus on their core skills, experience level, and preferred locations/salary if provided.
+        Current Time: ${new Date().toISOString()}.`
+      },
+      {
+        role: 'user',
+        content: `CANDIDATE PROFILE:\nName: ${profile.name}\nSkills: ${profile.skills?.join(', ') || 'Not specified'}\nExperience: ${profile.yearsExperience} years\nHeadline: ${profile.headline || 'None'}\nPreferred Locations: ${profile.preferredLocations?.join(', ') || 'Any'}\nPreferred Salary: ${profile.preferredSalary || 'Open'}`
+      }
+    ];
+
+    try {
+      const extracted = await this.callAI(messages, JobSearchParamsSchema);
+      return extracted as JobSearchParams;
+    } catch (e) {
+      console.error('Error generating search params from profile:', e);
+      // Fallback: simple heuristic
+      return {
+        skills: profile.skills,
+        location: profile.preferredLocations?.[0],
+        salaryMin: profile.preferredSalary,
+      };
+    }
+  }
 }

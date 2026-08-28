@@ -66,11 +66,14 @@ export default function AssistantScreen() {
 
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
-        const [profileRes, appliedRes] = await Promise.all([
+        const [profileRes, appliedRes, recommendRes] = await Promise.all([
           fetch(`${apiUrl}/api/profile`, {
             headers: { 'Authorization': `Bearer ${session?.access_token}` }
           }),
           fetch(`${apiUrl}/api/applications/ids`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` }
+          }),
+          fetch(`${apiUrl}/api/orchestrator/recommendations`, {
             headers: { 'Authorization': `Bearer ${session?.access_token}` }
           })
         ]);
@@ -94,6 +97,23 @@ export default function AssistantScreen() {
            if (Array.isArray(ids)) {
              setAppliedJobIds(new Set(ids));
            }
+        }
+
+        if (recommendRes.ok) {
+          const data = await recommendRes.json();
+          if (data.jobs && data.jobs.length > 0) {
+            setAllJobs(data.jobs);
+            // Add a recommendation message if it's the first time
+            setMessages(prev => [
+              ...prev,
+              {
+                id: 'recommendations',
+                type: 'bot',
+                text: "Based on your profile, here are some top matches I found for you:",
+                jobs: isDesktop ? undefined : data.jobs
+              }
+            ]);
+          }
         }
       } catch (e) {
         console.error('Init error:', e);

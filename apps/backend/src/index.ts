@@ -23,14 +23,12 @@ async function main() {
 
     await fastify.register(multipart, {
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
+        fileSize: 10 * 1024 * 1024,
       },
     });
 
     const secret = process.env.SUPABASE_JWT_SECRET;
 
-    // Register JWT plugin
-    // Actual verification is now handled by Supabase SDK in auth.middleware.ts
     await fastify.register(jwt, {
       secret: secret || 'dev-secret-key-123'
     });

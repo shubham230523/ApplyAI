@@ -94,6 +94,7 @@ export interface Application {
   location?: string;
   status: string;
   appliedAt: Date | string;
+  matchScore?: number;
 }
 
 export interface ApplicationDetail extends Application {
@@ -101,4 +102,5 @@ export interface ApplicationDetail extends Application {
   aiAnswers?: any;
   resumeId?: string;
   jobDescription?: string;
+  matchFeedback?: string;
 }
