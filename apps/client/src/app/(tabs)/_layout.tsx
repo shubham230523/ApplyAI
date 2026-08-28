@@ -259,7 +259,6 @@ export default function TabsLayout() {
           tabBarStyle: { display: 'none' },
           headerShown: false,
         }}>
-          <Tabs.Screen name="index" options={{ href: null }} />
           <Tabs.Screen name="assistant" options={{ title: 'Assistant' }} />
           <Tabs.Screen name="applications" options={{ title: 'Applications' }} />
           <Tabs.Screen name="profile" options={{ title: 'Profile' }} />

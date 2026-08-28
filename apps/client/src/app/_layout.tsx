@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../contexts/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -21,6 +21,13 @@ function RootLayoutNav() {
   const { session, loading, role } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const branchName = process.env.EXPO_PUBLIC_GIT_BRANCH || 'unknown';
+      document.title = `ApplyAI [${branchName}]`;
+    }
+  }, []);
 
   useEffect(() => {
     if (loading) return;
