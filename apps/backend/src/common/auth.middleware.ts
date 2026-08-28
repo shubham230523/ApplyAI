@@ -20,7 +20,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     }
 
     // Map Supabase user to the format expected by the rest of the app
-    request.user = {
+    (request as any).user = {
       sub: user.id,
       email: user.email || '',
       user_metadata: user.user_metadata as any
@@ -33,7 +33,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     });
   }
 }
-
+/*
 declare module '@fastify/jwt' {
   interface FastifyJWT {
     payload: {
@@ -52,3 +52,4 @@ declare module '@fastify/jwt' {
     };
   }
 }
+*/

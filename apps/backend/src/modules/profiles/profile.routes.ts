@@ -11,8 +11,9 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const role = request.user.user_metadata?.role || 'candidate';
-      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, role);
+      const user = (request as any).user;
+      const role = user.user_metadata?.role || 'candidate';
+      const dbUser = await getOrCreateUser(user.sub, user.email, role);
       const profile = await getProfile(dbUser.id);
       return profile || null;
     }
@@ -24,8 +25,9 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const role = request.user.user_metadata?.role || 'candidate';
-      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, role);
+      const user = (request as any).user;
+      const role = user.user_metadata?.role || 'candidate';
+      const dbUser = await getOrCreateUser(user.sub, user.email, role);
       const profile = await updateProfile(dbUser.id, request.body as any);
       return profile;
     }
@@ -38,12 +40,13 @@ export async function profileRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const data = await request.file();
+        const data = await (request as any).file();
         if (!data) {
           return reply.status(400).send({ error: 'No image uploaded' });
         }
 
-        const userId = request.user.sub;
+        const user = (request as any).user;
+        const userId = user.sub;
         console.log(`Uploading profile image for user: ${userId}, file: ${data.filename}`);
 
         const fileExt = data.filename.split('.').pop() || 'jpg';
@@ -94,7 +97,7 @@ export async function profileRoutes(fastify: FastifyInstance) {
         console.log(`Image uploaded successfully: ${publicUrl}`);
 
         // Update profile with new image URL
-        const dbUser = await getOrCreateUser(request.user.sub, request.user.email);
+        const dbUser = await getOrCreateUser(user.sub, user.email);
         await updateProfile(dbUser.id, { profileImageUrl: publicUrl } as any);
 
         return { imageUrl: publicUrl };
@@ -114,7 +117,8 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
+      const user = (request as any).user;
+      const dbUser = await getOrCreateUser(user.sub, user.email, 'recruiter');
       const profile = await getRecruiterProfile(dbUser.id);
       return profile || null;
     }
@@ -126,7 +130,8 @@ export async function profileRoutes(fastify: FastifyInstance) {
       preHandler: [authenticate],
     },
     async (request, reply) => {
-      const dbUser = await getOrCreateUser(request.user.sub, request.user.email, 'recruiter');
+      const user = (request as any).user;
+      const dbUser = await getOrCreateUser(user.sub, user.email, 'recruiter');
       const profile = await updateRecruiterProfile(dbUser.id, request.body as any);
       return profile;
     }

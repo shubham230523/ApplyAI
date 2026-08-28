@@ -7,7 +7,8 @@ const applicationService = new ApplicationService();
 export async function applicationRoutes(fastify: FastifyInstance) {
   fastify.post('/apply', { preHandler: [authenticate] }, async (request, reply) => {
     const { jobId } = request.body as { jobId: string };
-    const userId = request.user.sub;
+    const user = (request as any).user;
+    const userId = user.sub;
 
     try {
       const application = await applicationService.applyToJob(userId, jobId);
@@ -19,19 +20,22 @@ export async function applicationRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get('/', { preHandler: [authenticate] }, async (request, reply) => {
-    const userId = request.user.sub;
+    const user = (request as any).user;
+    const userId = user.sub;
     return applicationService.getUserApplications(userId);
   });
 
   fastify.get('/ids', { preHandler: [authenticate] }, async (request, reply) => {
-    const userId = request.user.sub;
+    const user = (request as any).user;
+    const userId = user.sub;
     const apps = await applicationService.getUserApplications(userId);
     return apps.map((a: any) => a.jobId);
   });
 
   fastify.get('/:id', { preHandler: [authenticate] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const userId = request.user.sub;
+    const user = (request as any).user;
+    const userId = user.sub;
 
     const application = await applicationService.getApplicationById(userId, id);
     if (!application) {

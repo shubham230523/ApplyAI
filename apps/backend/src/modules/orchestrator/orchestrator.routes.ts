@@ -2,10 +2,11 @@ import { FastifyInstance } from 'fastify';
 import { AIService } from '../ai/ai.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
 
-const aiService = new AIService();
+// const aiService = new AIService();
 
 export async function orchestratorRoutes(fastify: FastifyInstance) {
   fastify.post('/query', async (request, reply) => {
+    const aiService = new AIService();
     const { query, history } = request.body as { query: string, history?: any[] };
 
     try {

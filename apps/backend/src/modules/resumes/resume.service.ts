@@ -10,9 +10,8 @@ const mammoth = require('mammoth');
 import { randomUUID } from 'crypto';
 import { AIService } from '../ai/ai.service.js';
 
-const aiService = new AIService();
-
 export class ResumeService {
+  private aiService = new AIService();
   /**
    * Uploads resume to Supabase Storage and parses it for key fields.
    */
@@ -54,21 +53,21 @@ export class ResumeService {
           }
         }
 
-        extractedData = await aiService.parseResumeMultimodal(fileBuffer, mimeType);
+        extractedData = await this.aiService.parseResumeMultimodal(fileBuffer, mimeType);
       } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         console.log('[ResumeService] Using DOCX parsing');
         const docxResult = await mammoth.extractRawText({ buffer: fileBuffer });
         console.log('--- RAW DOCX TEXT START ---');
         console.log(docxResult.value);
         console.log('--- RAW DOCX TEXT END ---');
-        extractedData = await aiService.parseResumeText(docxResult.value);
+        extractedData = await this.aiService.parseResumeText(docxResult.value);
       } else {
         console.log('[ResumeService] Using plain text parsing');
         const text = fileBuffer.toString('utf-8');
         console.log('--- RAW TEXT START ---');
         console.log(text);
         console.log('--- RAW TEXT END ---');
-        extractedData = await aiService.parseResumeText(text);
+        extractedData = await this.aiService.parseResumeText(text);
       }
 
       console.log('[ResumeService] AI Extraction Successful:', JSON.stringify(extractedData, null, 2));

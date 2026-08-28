@@ -1,5 +1,4 @@
 import { JobSearchParams, CandidateProfile, OrchestratorResponse, Job } from '@applyai/shared-types';
-import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../../lib/supabase.js';
 
 // API Keys
@@ -57,29 +56,45 @@ const ResumeSchema = {
 export class AIService {
   private _client: any = null;
 
-  private get client() {
+  private async getClient() {
     if (!this._client) {
-      this._client = new GoogleGenAI({
-        apiKey: GEMINI_API_KEY
-      });
+      try {
+        const { GoogleGenAI } = await import('@google/genai');
+        this._client = new GoogleGenAI({
+          apiKey: GEMINI_API_KEY
+        });
+      } catch (err) {
+        console.error('Failed to initialize GoogleGenAI SDK:', err);
+        throw err;
+      }
     }
     return this._client;
   }
 
   private async callAI(messages: any[], jsonSchema?: any, fileData?: { data: string, mimeType: string }): Promise<any> {
-    const promptText = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
-    const finalPrompt = jsonSchema
-      ? `${promptText}\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`
-      : promptText;
-
     try {
-      console.log('--- GEMINI AI CALL START ---');
-      const model = this.client.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const client = await this.getClient();
+      const systemMessage = messages.find(m => m.role === 'system')?.content;
+      const userMessages = messages.filter(m => m.role !== 'system');
 
-      const parts: any[] = [{ text: finalPrompt }];
+      // Add JSON instructions to the last user message
+      let lastUserMessage = userMessages[userMessages.length - 1]?.content || '';
+      if (jsonSchema) {
+        lastUserMessage += `\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`;
+      }
+
+      const contents: any[] = userMessages.map((m, i) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: i === userMessages.length - 1 ? lastUserMessage : m.content }]
+      }));
+
+      if (contents.length === 0) {
+        contents.push({ role: 'user', parts: [{ text: lastUserMessage }] });
+      }
+
       if (fileData) {
         console.log(`[AIService] Including multimodal data: ${fileData.mimeType} (${fileData.data.length} bytes)`);
-        parts.push({
+        contents[contents.length - 1].parts.push({
           inlineData: {
             data: fileData.data,
             mimeType: fileData.mimeType
@@ -87,9 +102,17 @@ export class AIService {
         });
       }
 
-      const result = await model.generateContent(parts);
-      const response = await result.response;
-      const content = response.text().trim();
+      console.log('--- GEMINI AI CALL START ---');
+      const response = await client.models.generateContent({
+        model: 'gemini-3.5-flash-lite',
+        systemInstruction: systemMessage || undefined,
+        contents: contents,
+        config: jsonSchema ? {
+          responseMimeType: 'application/json',
+        } : undefined
+      });
+
+      const content = response.text?.trim() || '';
       console.log('--- GEMINI AI RESPONSE RECEIVED ---');
 
       if (jsonSchema) {
