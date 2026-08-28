@@ -34,7 +34,11 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
   }
 
   return (
-    <ScrollView className="flex-1 w-full px-6" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 w-full px-6"
+      showsVerticalScrollIndicator={Platform.OS === 'web'}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       <View className="py-8">
         <Text className={`${isMobile ? 'text-4xl' : 'text-3xl'} font-black text-gray-900 tracking-tight`}>Profile</Text>
         {profile?.email ? (

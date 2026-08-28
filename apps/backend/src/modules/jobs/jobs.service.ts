@@ -71,11 +71,36 @@ export class JobsService {
     return newJob as any as Job;
   }
 
-  async getJobsByRecruiter(recruiterId: string): Promise<Job[]> {
+  async getJobsByRecruiter(recruiterId: string): Promise<any[]> {
     if (!db) return [];
     try {
-      const result = await db.select().from(jobs).where(eq(jobs.recruiterId, recruiterId));
-      return result as any as Job[];
+      const { applications } = await import('../../db/schema.js');
+      const result = await db
+        .select({
+          id: jobs.id,
+          title: jobs.title,
+          description: jobs.description,
+          companyName: jobs.companyName,
+          location: jobs.location,
+          workplaceType: jobs.workplaceType,
+          employmentType: jobs.employmentType,
+          experienceLevel: jobs.experienceLevel,
+          salaryCurrency: jobs.salaryCurrency,
+          salaryMin: jobs.salaryMin,
+          salaryMax: jobs.salaryMax,
+          salaryPeriod: jobs.salaryPeriod,
+          isActive: jobs.isActive,
+          postedAt: jobs.postedAt,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
+          applicantCount: sql<number>`count(${applications.id})::int`,
+        })
+        .from(jobs)
+        .leftJoin(applications, eq(jobs.id, applications.jobId))
+        .where(eq(jobs.recruiterId, recruiterId))
+        .groupBy(jobs.id);
+
+      return result;
     } catch (e) {
       console.error('Error fetching jobs by recruiter:', e);
       return [];

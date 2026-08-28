@@ -1,29 +1,45 @@
-# Fix Workspace Issues: Redirect Loop, Routing Warning, and Scrolling
+# Implementation Plan: Recruiter Applicant Management
 
-This plan addresses three issues identified in the Recruiter Workspace:
-1.  **Infinite Redirect/Refresh Loop**: Caused by `AuthProvider` toggling `loading` state during role verification and flipping between metadata and DB roles.
-2.  **Routing Warning**: `No route named "index" exists` in the `(recruiter)` group.
-3.  **Scrolling/Cropping**: Content in the Workspace screen is cut off at the bottom on some viewport sizes.
+This plan outlines the steps to allow recruiters to view applicants for their jobs and drill down into specific application details.
 
 ## Proposed Changes
 
-### Auth & Navigation
+### Backend (Node.js/Fastify)
 
-#### [MODIFY] [auth.tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/contexts/auth.tsx)
-- Decouple `verifying` from the global `loading` state used for full-screen blocking. This prevents the "empty page" flicker during background role verification.
-- Only update the role from metadata if a verified role hasn't been fetched yet in the current session.
+#### [MODIFY] [application.service.ts](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/backend/src/modules/applications/application.service.ts)
+- Add `getApplicationsByJob(jobId: string, recruiterId: string)`: Retrieves a list of applications for a specific job, ensuring the job belongs to the recruiter. Joins with `profiles` to get candidate names.
+- Add `getRecruiterApplicationDetail(applicationId: string, recruiterId: string)`: Retrieves full details of an application, including the AI cover letter and the candidate's parsed resume content.
+
+#### [MODIFY] [application.routes.ts](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/backend/src/modules/applications/application.routes.ts)
+- Add `GET /job/:jobId`: Endpoint for recruiters to fetch applicants for a job.
+- Add `GET /recruiter-detail/:id`: Endpoint for recruiters to fetch full application details.
+- Integrate with `profile.service` to verify recruiter identity.
+
+### Frontend (React Native/Expo Router)
 
 #### [MODIFY] [workspace.tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/workspace.tsx)
-- Fix scrollability by ensuring `ScrollView` content container has `flexGrow: 1`.
-- Adjust layout to be more resilient to different viewport heights.
-- Use a standard `View` instead of `SafeAreaView` inside the screen for better Web flex behavior, while maintaining safe area handling if needed (though the screen already has a header).
+- Update the job card `onPress` to navigate to `/(recruiter)/job-applications/[jobId]`.
+- (Optional) Update the "Total Applicants" statistic to reflect actual data if possible.
+
+#### [NEW] [job-applications/[id].tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/job-applications/[id].tsx)
+- New screen to display a list of all candidates who applied for a specific job.
+- Each entry will show candidate name, application date, and a link to view details.
+
+#### [NEW] [application-detail/[id].tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/application-detail/[id].tsx)
+- New screen to show the full application for a recruiter.
+- Displays the AI-generated cover letter and the candidate's resume/profile details.
 
 #### [MODIFY] [_layout.tsx](file:///C:/Users/shubham/Documents/ReactNative/ApplyAI-2/apps/client/src/app/(recruiter)/_layout.tsx)
-- Remove the non-existent `index` screen definition to clear the routing warning.
+- Register the new routes in the Recruiter stack.
 
 ## Verification Plan
 
+### Automated Tests
+- No new automated tests planned; manual verification will be used.
+
 ### Manual Verification
-- Log in as a recruiter and verify the redirect to `/workspace` is stable and doesn't flicker.
-- Check the console for the "No route named index" warning (it should be gone).
-- Resize the browser window to a small height and verify that the Workspace screen is scrollable and no content is cropped.
+- Log in as a recruiter.
+- Navigate to the Workspace.
+- Click on a job that has applicants (need to apply as a candidate first).
+- Verify the list of applicants is displayed correctly.
+- Click on an applicant and verify the detail screen shows the cover letter and resume info.

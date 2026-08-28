@@ -6,6 +6,8 @@ export default function RecruiterLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="workspace" />
       <Stack.Screen name="create-job" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="job-applications/[id]" />
+      <Stack.Screen name="application-detail/[id]" />
     </Stack>
   );
 }

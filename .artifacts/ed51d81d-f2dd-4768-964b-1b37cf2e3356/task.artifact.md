@@ -1,0 +1,8 @@
+- `[x]` Implement backend application services for recruiters
+    - `[x]` Add `getApplicationsByJob` to `ApplicationService`
+    - `[x]` Add `getRecruiterApplicationDetail` to `ApplicationService`
+    - `[x]` Register recruiter routes in `application.routes.ts`
+- `[x]` Update `Workspace` screen to link to applicant list
+- `[x]` Create `JobApplicantsScreen` (`job-applications/[id].tsx`)
+- `[x]` Create `RecruiterApplicationDetailScreen` (`application-detail/[id].tsx`)
+- `[x]` Register new screens in recruiter layout

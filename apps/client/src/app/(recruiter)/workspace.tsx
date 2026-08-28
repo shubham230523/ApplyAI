@@ -62,6 +62,7 @@ export default function RecruiterDashboard() {
 
   const displayName = profile?.name || user?.email?.split('@')[0] || 'Recruiter';
   const companyName = profile?.companyName || 'Your Company';
+  const totalApplicants = jobs.reduce((sum, job) => sum + ((job as any).applicantCount || 0), 0);
 
   if (loading && !refreshing) {
     return (
@@ -147,7 +148,7 @@ export default function RecruiterDashboard() {
                         </View>
                         <Text className="text-slate-600 font-bold">Total Applicants</Text>
                       </View>
-                      <Text className="text-2xl font-black text-slate-900">0</Text>
+                      <Text className="text-2xl font-black text-slate-900">{totalApplicants}</Text>
                     </View>
 
                     <View className="h-[1px] bg-slate-50 my-2" />
@@ -197,7 +198,7 @@ export default function RecruiterDashboard() {
                         key={job.id}
                         className="bg-white p-7 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/30 flex-row items-center active:scale-[0.99] active:bg-slate-50 transition-all"
                         onPress={() => {
-                          // TODO: Implement job details view
+                          router.push(`/(recruiter)/job-applications/${job.id}`);
                         }}
                       >
                         <View className="w-16 h-16 bg-slate-50 rounded-3xl items-center justify-center mr-6 border border-slate-100/50 shadow-inner">
@@ -214,7 +215,7 @@ export default function RecruiterDashboard() {
                             <Icon name="mappin.circle" size={14} color="#94a3b8" />
                             <Text className="text-slate-400 text-sm ml-1.5 font-bold tracking-tight">{job.location || 'Remote'}</Text>
                             <View className="w-1 h-1 rounded-full bg-slate-200 mx-4" />
-                            <Text className="text-slate-400 text-sm font-bold tracking-tight">0 Applicants</Text>
+                            <Text className="text-slate-400 text-sm font-bold tracking-tight">{(job as any).applicantCount || 0} Applicants</Text>
                           </View>
                         </View>
 
