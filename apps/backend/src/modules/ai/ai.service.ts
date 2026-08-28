@@ -74,26 +74,29 @@ export class AIService {
   private async callAI(messages: any[], jsonSchema?: any, fileData?: { data: string, mimeType: string }): Promise<any> {
     try {
       const client = await this.getClient();
+
+      // Separate system message if present
       const systemMessage = messages.find(m => m.role === 'system')?.content;
-      const userMessages = messages.filter(m => m.role !== 'system');
+      const otherMessages = messages.filter(m => m.role !== 'system');
 
       // Add JSON instructions to the last user message
-      let lastUserMessage = userMessages[userMessages.length - 1]?.content || '';
+      let lastUserMessage = otherMessages[otherMessages.length - 1]?.content || '';
       if (jsonSchema) {
         lastUserMessage += `\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`;
       }
 
-      const contents: any[] = userMessages.map((m, i) => ({
+      // Format contents for the models.generateContent API
+      const contents: any[] = otherMessages.map((m, i) => ({
         role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: i === userMessages.length - 1 ? lastUserMessage : m.content }]
+        parts: [{ text: i === otherMessages.length - 1 ? lastUserMessage : m.content }]
       }));
 
       if (contents.length === 0) {
         contents.push({ role: 'user', parts: [{ text: lastUserMessage }] });
       }
 
+      // Add multimodal data to the last part if provided
       if (fileData) {
-        console.log(`[AIService] Including multimodal data: ${fileData.mimeType} (${fileData.data.length} bytes)`);
         contents[contents.length - 1].parts.push({
           inlineData: {
             data: fileData.data,
@@ -102,19 +105,16 @@ export class AIService {
         });
       }
 
-      console.log('--- GEMINI AI CALL START ---');
-      const result = await client.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+      const response = await client.models.generateContent({
+        model: 'gemini-3.5-flash-lite',
         systemInstruction: systemMessage || undefined,
-      }).generateContent({
         contents: contents,
-        generationConfig: jsonSchema ? {
+        config: jsonSchema ? {
           responseMimeType: 'application/json',
         } : undefined
       });
 
-      const content = result.response.text()?.trim() || '';
-      console.log('--- GEMINI AI RESPONSE RECEIVED ---');
+      const content = response.text.trim();
 
       if (jsonSchema) {
         try {

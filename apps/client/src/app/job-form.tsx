@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
