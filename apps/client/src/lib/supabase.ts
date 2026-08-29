@@ -1,4 +1,3 @@
-import 'react-native-url-polyfill/auto';
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
@@ -34,7 +33,7 @@ const ExpoSecureStoreAdapter = {
 };
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://sfuxebkldwvyjsusdupp.supabase.co';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmdXhlYmtsZHd2eWpzdXNkdXBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMDUzODMsImV4cCI6MjEwMjg4MTM4M30.EyNMVW3hX36GXYl6JNsZuh-LyWLVyuI9Zg7k9C2NPJI';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase configuration is missing! Auth features will not work.');

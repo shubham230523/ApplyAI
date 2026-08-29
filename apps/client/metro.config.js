@@ -26,15 +26,4 @@ config.resolver.disableHierarchicalLookup = true;
 config.resolver.unstable_enablePackageExports = true;
 config.resolver.sourceExts.push("mjs");
 
-// Handle hoisted expo/AppEntry.js in monorepos
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === '../../App' || moduleName === './App' || moduleName === './index') {
-    return {
-      filePath: path.resolve(projectRoot, "index.js"),
-      type: "sourceFile",
-    };
-  }
-  return context.resolveRequest(context, moduleName, platform);
-};
-
 module.exports = withNativeWind(config, { input: "./src/global.css" });

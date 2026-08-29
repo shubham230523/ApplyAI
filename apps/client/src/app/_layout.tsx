@@ -3,6 +3,12 @@ import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StyleSheet, Platform } from 'react-native';
+
+// Polyfill URL for Android/iOS
+if (Platform.OS !== 'web') {
+  require('react-native-url-polyfill/auto');
+}
+
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../contexts/auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
