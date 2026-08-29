@@ -7,7 +7,10 @@
 > [!NOTE]
 > **Performance**: This project uses Render's free tier for backend hosting. As a result, API calls may experience a delay (cold start) on the first request after a period of inactivity.
 
-ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it empowers candidates to find, rank, and apply for jobs using natural language.
+ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it features a dual-workspace architecture:
+
+- 👤 **Candidate Workspace**: A natural-language interface to find jobs, get AI match scores, and generate tailored resumes/cover letters.
+- 💼 **Recruiter Workspace**: A dedicated dashboard for hiring managers to post new job listings, generate AI-powered descriptions, and view semantically ranked applicants.
 
 ---
 
