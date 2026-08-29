@@ -75,46 +75,53 @@ export class AIService {
     try {
       const client = await this.getClient();
 
-      // Separate system message if present
-      const systemMessage = messages.find(m => m.role === 'system')?.content;
-      const otherMessages = messages.filter(m => m.role !== 'system');
+      let response: any;
 
-      // Add JSON instructions to the last user message
-      let lastUserMessage = otherMessages[otherMessages.length - 1]?.content || '';
-      if (jsonSchema) {
-        lastUserMessage += `\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`;
-      }
-
-      // Format contents for the models.generateContent API
-      const contents: any[] = otherMessages.map((m, i) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: i === otherMessages.length - 1 ? lastUserMessage : m.content }]
-      }));
-
-      if (contents.length === 0) {
-        contents.push({ role: 'user', parts: [{ text: lastUserMessage }] });
-      }
-
-      // Add multimodal data to the last part if provided
       if (fileData) {
+        // Multimodal flow (Resume Parsing) - uses content array structure
+        const systemMessage = messages.find(m => m.role === 'system')?.content;
+        const userMessages = messages.filter(m => m.role !== 'system');
+
+        const contents: any[] = userMessages.map((m, i) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }));
+
+        if (contents.length === 0) {
+          contents.push({ role: 'user', parts: [{ text: 'Parse this file.' }] });
+        }
+
+        // Add file data to the last part
         contents[contents.length - 1].parts.push({
           inlineData: {
             data: fileData.data,
             mimeType: fileData.mimeType
           }
         });
+
+        response = await client.models.generateContent({
+          model: 'gemini-3.5-flash-lite',
+          systemInstruction: systemMessage || undefined,
+          contents: contents,
+          config: jsonSchema ? {
+            responseMimeType: 'application/json',
+          } : undefined
+        });
+      } else {
+        // Standard Text flow (Job Summary, Matching, Search Params)
+        // Matching origin/master pattern: combine all messages into a single prompt string
+        const prompt = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
+        const finalPrompt = jsonSchema
+          ? `${prompt}\n\nCRITICAL: Return ONLY valid JSON matching this schema: ${JSON.stringify(jsonSchema)}. No markdown.`
+          : prompt;
+
+        response = await client.models.generateContent({
+          model: 'gemini-3.5-flash-lite',
+          contents: finalPrompt
+        });
       }
 
-      const response = await client.models.generateContent({
-        model: 'gemini-3.5-flash-lite',
-        systemInstruction: systemMessage || undefined,
-        contents: contents,
-        config: jsonSchema ? {
-          responseMimeType: 'application/json',
-        } : undefined
-      });
-
-      const content = response.text.trim();
+      const content = response.text?.trim() || '';
 
       if (jsonSchema) {
         try {
@@ -499,8 +506,8 @@ export class AIService {
 
     try {
       return await this.callAI(messages);
-    } catch (e) {
-      console.error('JD Generation Error:', e);
+    } catch (error) {
+      console.error('JD Generation Error:', error);
       return "Failed to generate job description. Please try again.";
     }
   }

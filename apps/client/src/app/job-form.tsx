@@ -316,7 +316,6 @@ export default function JobFormScreen() {
   );
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: '#fafaf9' }}>
     <SafeAreaView className="flex-1 bg-[#fafaf9]">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <View className="bg-white border-b border-slate-100 items-center z-10">
@@ -503,6 +502,5 @@ export default function JobFormScreen() {
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
-    </SafeAreaProvider>
   );
 }
