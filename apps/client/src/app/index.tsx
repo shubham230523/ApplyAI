@@ -3,11 +3,18 @@ import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, Platform
 import { useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/auth';
 
 export default function RoleSelectionScreen() {
+  const { session, loading } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = width > 1024;
+
+  // Prevent flash: If we have a session and aren't loading, don't show the selection screen
+  if (session && !loading) {
+    return null;
+  }
 
   const handleSelectRole = (role: 'candidate' | 'recruiter') => {
     router.push({

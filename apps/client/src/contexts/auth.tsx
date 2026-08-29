@@ -24,12 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchTrueRole = async (session: Session) => {
-      if (hasVerified) {
-        setVerifying(false);
-        return;
-      }
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
-      // setVerifying is now handled by the caller to avoid state gaps
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
       try {
         console.log('Verifying true role from backend...');
         const response = await fetch(`${apiUrl}/api/profile`, {
@@ -40,13 +35,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (profile && profile.role) {
             console.log('Verified True Role from DB:', profile.role);
             setRole(profile.role as UserRole);
-            setHasVerified(true);
           }
         }
       } catch (e) {
         console.error('Failed to verify true role from backend:', e);
       } finally {
+        setHasVerified(true);
         setVerifying(false);
+        setLoading(false);
       }
     };
 
@@ -56,16 +52,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session) {
         const metadataRole = (session.user.user_metadata?.role as UserRole) ?? null;
         setRole(metadataRole);
-        // Start verification before setting loading to false
         setVerifying(true);
         fetchTrueRole(session);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[Auth] State Change Event: ${event}`);
+
+      // Focus/Token Refresh Stability:
+      // If the user ID hasn't changed and we are already verified, just update the session object
+      // without triggering a global "loading" state. This prevents UI flashes on tab switch.
+      if (session?.user.id === user?.id && hasVerified && (event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED')) {
+        console.log('[Auth] Stable session update - skipping re-verification');
+        setSession(session);
+        return;
+      }
+
+      setLoading(true);
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session) {
         const userRole = (session.user.user_metadata?.role as UserRole) ?? null;
         if (!hasVerified) {
@@ -77,8 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole(null);
         setHasVerified(false);
         setVerifying(false);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

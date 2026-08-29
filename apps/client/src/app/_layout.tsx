@@ -81,6 +81,13 @@ function RootLayoutNav() {
 
   if (loading) return null;
 
+  const isAtSelectionScreen = segments.length === 0 || (segments.length === 1 && segments[0] === 'index');
+  // Final flash protection: If we have a session but are still on the selection screen,
+  // don't render anything while the useEffect redirect is pending.
+  if (session && isAtSelectionScreen) {
+    return null;
+  }
+
   return (
     <Stack screenOptions={{ headerShown: false }} />
   );
