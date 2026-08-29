@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchTrueRole = async (session: Session) => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
       try {
         console.log('Verifying true role from backend...');
         const response = await fetch(`${apiUrl}/api/profile`, {

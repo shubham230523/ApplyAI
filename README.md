@@ -2,12 +2,23 @@
 
 ### The AI-First Job Search & Auto-Apply Platform
 
-> [!CAUTION]
-> **Work in Progress**: This project is currently under active development and is not yet complete. Features are being added and refined daily.
-
 [**Live Demo (Web)**](https://shubham230523.github.io/ApplyAI/)
 
 ApplyAI is a modern, cross-platform application designed to transform the job search experience from a tedious manual process into a seamless AI-driven conversation. Built with **React Native**, **Expo**, and **Fastify**, it empowers candidates to find, rank, and apply for jobs using natural language.
+
+---
+
+## ✨ Key AI Features
+
+- 📄 **AI Resume Parser**: Automatically extract skills, experience, and education from PDF/Image resumes with high fidelity.
+- 🎯 **AI Matching Score**: Get a strategic percentage score (0-100%) and feedback on how well your profile matches a specific job.
+- 🛠️ **AI Resume Tailoring**: Optimize and rephrase your resume data to align perfectly with a job description.
+- ✍️ **AI Cover Letter Generation**: Craft persuasive, job-specific cover letters that connect your unique background to role requirements.
+- 🧠 **AI Recommendation Engine**: Receive proactive job suggestions based on your profile and search history before you even type a query.
+- 🔍 **AI Job Search**: Search for roles across multiple sources using natural language ("Remote React roles with 20+ LPA").
+- 📑 **AI JD Summary**: Instantly get 3-4 high-impact bullet points summarizing any complex job description.
+- 💼 **AI Job Description Generator**: Help recruiters create professional, engaging JDs in seconds from basic role parameters.
+- 📊 **AI Candidate Ranking**: Sort through applicants based on semantic match scores for easier recruiter evaluation.
 
 ---
 
@@ -35,7 +46,6 @@ Traditional job boards force you to fiddle with filters and scroll through endle
 
 ### **Packages**
 - **@applyai/shared-types**: Shared domain models and TypeScript interfaces.
-- **@applyai/ui**: (Planned) Reusable cross-platform component library.
 
 ---
 

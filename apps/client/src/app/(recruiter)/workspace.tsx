@@ -14,7 +14,7 @@ export default function RecruiterDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const [profileRes, jobsRes] = await Promise.all([
         fetch(`${apiUrl}/api/profile/recruiter`, {

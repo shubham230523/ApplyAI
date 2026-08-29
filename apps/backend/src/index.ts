@@ -38,7 +38,7 @@ async function main() {
       },
     });
 
-    const secret = process.env.SUPABASE_JWT_SECRET;
+    const secret = process.env.SUPABASE_JWT_SECRET?.replace(/^"(.*)"$/, '$1');
 
     await fastify.register(jwt, {
       secret: secret || 'dev-secret-key-123'

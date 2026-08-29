@@ -76,7 +76,7 @@ export default function TabsLayout() {
   const fetchProfile = async () => {
     if (!session) return;
     setLoadingProfile(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const response = await fetch(`${apiUrl}/api/profile`, {
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
@@ -109,7 +109,7 @@ export default function TabsLayout() {
 
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const formData = new FormData();
       const response = await fetch(asset.uri);
@@ -154,7 +154,7 @@ export default function TabsLayout() {
       const pdfBlob = new Blob([blob], { type: 'application/pdf' });
       formData.append('file', pdfBlob, file.name);
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
       const uploadResponse = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
         body: formData,

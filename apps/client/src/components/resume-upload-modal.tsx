@@ -39,7 +39,7 @@ export const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({ visible, o
       const pdfBlob = new Blob([blob], { type: 'application/pdf' });
       formData.append('file', pdfBlob, file.name);
 
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
       const response = await fetch(`${apiUrl}/api/resume/upload`, {
         method: 'POST',
         headers: {

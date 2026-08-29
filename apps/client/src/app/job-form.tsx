@@ -52,7 +52,7 @@ export default function JobFormScreen() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
       try {
         const response = await fetch(`${apiUrl}/api/profile`, {
           headers: {
@@ -139,7 +139,7 @@ export default function JobFormScreen() {
 
   const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const formData = new FormData();
       const response = await fetch(asset.uri);
@@ -185,7 +185,7 @@ export default function JobFormScreen() {
     }
 
     setLoading(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
 
     try {
       const payload = {

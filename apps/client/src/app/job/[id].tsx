@@ -39,7 +39,7 @@ export default function JobDetailsScreen() {
 
   useEffect(() => {
     const fetchJobAndStatus = async () => {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
       try {
         const headers: any = {};
         if (session?.access_token) {
@@ -96,7 +96,7 @@ export default function JobDetailsScreen() {
   const handleGenerateCoverLetter = async () => {
     if (generatingCoverLetter) return;
     setGeneratingCoverLetter(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const response = await fetch(`${apiUrl}/api/jobs/${id}/cover-letter`, {
         headers: { 'Authorization': `Bearer ${session?.access_token}` }
@@ -120,7 +120,7 @@ export default function JobDetailsScreen() {
     if (!mainResume || tailoring) return;
 
     setTailoring(true);
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const response = await fetch(`${apiUrl}/api/resume/tailor`, {
         method: 'POST',
@@ -172,7 +172,7 @@ export default function JobDetailsScreen() {
   const handleApply = async () => {
     if (isApplied || applying) return;
 
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     setApplying(true);
 
     try {

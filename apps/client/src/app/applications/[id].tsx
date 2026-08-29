@@ -17,7 +17,7 @@ export default function ApplicationDetailScreen() {
   useEffect(() => {
     const fetchApplication = async () => {
       if (!session) return;
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
       try {
         const response = await fetch(`${apiUrl}/api/applications/${id}`, {
           headers: { 'Authorization': `Bearer ${session?.access_token}` }
