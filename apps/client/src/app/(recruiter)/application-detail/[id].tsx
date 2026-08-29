@@ -154,11 +154,11 @@ export default function ApplicationDetailScreen() {
 
             {/* Action Footer */}
             <View className="flex-row gap-4 mt-4">
-              <TouchableOpacity className="flex-1 bg-emerald-600 py-6 rounded-[32px] items-center justify-center shadow-xl shadow-emerald-200 active:scale-95">
-                <Text className="text-white font-black uppercase tracking-[2px] text-xs">Interview Candidate</Text>
+              <TouchableOpacity className="flex-1 bg-emerald-600 py-6 px-4 rounded-[32px] items-center justify-center shadow-xl shadow-emerald-200 active:scale-95">
+                <Text className="text-white font-black uppercase tracking-[2px] text-[10px] text-center">Interview Candidate</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="flex-1 bg-white py-6 rounded-[32px] items-center justify-center border border-slate-200 active:scale-95">
-                <Text className="text-slate-600 font-black uppercase tracking-[2px] text-xs">Reject</Text>
+              <TouchableOpacity className="flex-1 bg-white py-6 px-4 rounded-[32px] items-center justify-center border border-slate-200 active:scale-95">
+                <Text className="text-slate-600 font-black uppercase tracking-[2px] text-[10px] text-center">Reject</Text>
               </TouchableOpacity>
             </View>
           </View>

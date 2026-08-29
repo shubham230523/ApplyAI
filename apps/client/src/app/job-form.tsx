@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/contexts/auth';
 
 interface WorkExperience {
@@ -25,6 +25,7 @@ export default function JobFormScreen() {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isDesktop = width > 1024;
 
   // Form State
@@ -298,17 +299,28 @@ export default function JobFormScreen() {
           <Text className="text-red-500 text-[10px] ml-1">*</Text>
         )}
       </View>
-      <TextInput
-        value={value}
-        onChangeText={(text) => {
-          setForm(f => ({ ...f, [key]: text }));
-          if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
-        }}
-        placeholder={placeholder}
-        placeholderTextColor="#cbd5e1"
-        keyboardType={keyboardType}
-        className={`bg-white px-5 py-4 rounded-2xl border ${errors[key] ? 'border-red-500' : 'border-slate-200/60'} text-slate-900 font-semibold shadow-sm focus:border-indigo-500`}
-      />
+      <View className={`bg-slate-50 rounded-2xl border ${errors[key] ? 'border-red-500' : 'border-slate-200/60'} shadow-sm overflow-hidden`}>
+        <TextInput
+          value={value}
+          onChangeText={(text) => {
+            setForm(f => ({ ...f, [key]: text }));
+            if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
+          }}
+          placeholder={placeholder}
+          placeholderTextColor="#cbd5e1"
+          keyboardType={keyboardType}
+          style={{
+            backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0,0,0,0)',
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            color: '#0f172a',
+            fontWeight: '600',
+            fontSize: 15,
+          }}
+          className="w-full bg-transparent"
+          underlineColorAndroid="transparent"
+        />
+      </View>
       {errors[key] ? (
         <Text className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{errors[key]}</Text>
       ) : null}
@@ -316,7 +328,7 @@ export default function JobFormScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#fafaf9]">
+    <View className="flex-1 bg-[#fafaf9]" style={{ paddingTop: insets.top }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <View className="bg-white border-b border-slate-100 items-center z-10">
           <View style={{ maxWidth: 1000, width: '100%' }} className="px-6 py-4 flex-row items-center justify-between">
@@ -410,23 +422,31 @@ export default function JobFormScreen() {
                   <View className={isDesktop ? 'flex-row -mx-2' : ''}>
                     <View className="flex-1 mx-2 mb-6">
                       <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-2 ml-1">Company</Text>
-                      <TextInput
-                        value={exp.company}
-                        onChangeText={(t) => updateExperience(idx, 'company', t)}
-                        placeholder="e.g. Google"
-                        placeholderTextColor="#cbd5e1"
-                        className="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-slate-900 font-semibold"
-                      />
+                      <View className="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                        <TextInput
+                          value={exp.company}
+                          onChangeText={(t) => updateExperience(idx, 'company', t)}
+                          placeholder="e.g. Google"
+                          placeholderTextColor="#cbd5e1"
+                          style={{ backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0,0,0,0)', paddingHorizontal: 20, paddingVertical: 16, color: '#0f172a', fontWeight: '600' }}
+                          className="w-full bg-transparent"
+                          underlineColorAndroid="transparent"
+                        />
+                      </View>
                     </View>
                     <View className="flex-1 mx-2 mb-6">
                       <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-2 ml-1">Role</Text>
-                      <TextInput
-                        value={exp.role}
-                        onChangeText={(t) => updateExperience(idx, 'role', t)}
-                        placeholder="e.g. Senior Developer"
-                        placeholderTextColor="#cbd5e1"
-                        className="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-slate-900 font-semibold"
-                      />
+                      <View className="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                        <TextInput
+                          value={exp.role}
+                          onChangeText={(t) => updateExperience(idx, 'role', t)}
+                          placeholder="e.g. Senior Developer"
+                          placeholderTextColor="#cbd5e1"
+                          style={{ backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0,0,0,0)', paddingHorizontal: 20, paddingVertical: 16, color: '#0f172a', fontWeight: '600' }}
+                          className="w-full bg-transparent"
+                          underlineColorAndroid="transparent"
+                        />
+                      </View>
                     </View>
                   </View>
 
@@ -443,16 +463,20 @@ export default function JobFormScreen() {
 
                   <View className="mb-6">
                     <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-2 ml-1">Work Description</Text>
-                    <TextInput
-                      value={exp.description}
-                      onChangeText={(t) => updateExperience(idx, 'description', t)}
-                      placeholder="Describe your impact and technologies used..."
-                      placeholderTextColor="#cbd5e1"
-                      multiline
-                      numberOfLines={4}
-                      className="bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 text-slate-900 font-medium min-h-[120px]"
-                      textAlignVertical="top"
-                    />
+                    <View className="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+                      <TextInput
+                        value={exp.description}
+                        onChangeText={(t) => updateExperience(idx, 'description', t)}
+                        placeholder="Describe your impact and technologies used..."
+                        placeholderTextColor="#cbd5e1"
+                        multiline
+                        numberOfLines={4}
+                        style={{ backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0,0,0,0)', paddingHorizontal: 20, paddingVertical: 16, color: '#0f172a', fontWeight: '500', minHeight: 120 }}
+                        className="w-full bg-transparent"
+                        textAlignVertical="top"
+                        underlineColorAndroid="transparent"
+                      />
+                    </View>
                   </View>
 
                   <TouchableOpacity
@@ -501,6 +525,6 @@ export default function JobFormScreen() {
           onCancel={() => setDatePicker({ ...datePicker, visible: false })}
         />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

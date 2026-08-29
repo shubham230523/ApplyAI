@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView, RefreshControl, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl, Platform, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/auth';
 import { Icon } from '@/components/ui/Icon';
@@ -8,15 +9,17 @@ export default function JobApplicantsScreen() {
   const { id } = useLocalSearchParams();
   const { session } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = width > 1024;
+  const isMobile = width < 768;
 
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchApplicants = useCallback(async () => {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4002';
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
     try {
       const response = await fetch(`${apiUrl}/api/applications/job/${id}`, {
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
@@ -51,7 +54,7 @@ export default function JobApplicantsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#fafaf9]">
+    <View className="flex-1 bg-[#fafaf9]" style={{ paddingTop: insets.top }}>
       {/* Header */}
       <View className="px-6 py-5 bg-white border-b border-slate-100 flex-row items-center z-10 shadow-sm">
         <TouchableOpacity
@@ -72,7 +75,7 @@ export default function JobApplicantsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#059669" />}
       >
         <View className="w-full max-w-5xl mx-auto">
-          <View className="flex-row justify-between items-end mb-6 px-2">
+          <View className="flex-row justify-between items-center mb-6 px-2">
             <View>
               <Text className="text-slate-400 font-black text-[10px] uppercase tracking-[4px]">Neural Ranking Active</Text>
             </View>
@@ -107,19 +110,19 @@ export default function JobApplicantsScreen() {
                     </View>
                   </View>
 
-                  <View className="flex-1">
+                  <View className="flex-1 min-w-0">
                     <View className="flex-row items-center justify-between mb-1">
-                      <Text className="text-lg font-black text-slate-900 tracking-tight">{app.candidateName || app.candidateEmail.split('@')[0]}</Text>
-                      <View className="bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                        <Text className="text-emerald-700 text-[10px] font-black">{app.matchScore || 0}% Match</Text>
+                      <Text className="text-lg font-black text-slate-900 tracking-tight flex-1" numberOfLines={1}>{app.candidateName || app.candidateEmail.split('@')[0]}</Text>
+                      <View className="bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 ml-2">
+                        <Text className="text-emerald-700 text-[9px] font-black">{app.matchScore || 0}% Match</Text>
                       </View>
                     </View>
 
-                    <View className="flex-row items-center mt-1">
-                      <Text className="text-slate-400 text-xs font-bold uppercase tracking-widest">Applied {new Date(app.appliedAt).toLocaleDateString()}</Text>
-                      <View className="w-1 h-1 rounded-full bg-slate-200 mx-3" />
-                      <View className="bg-blue-50 px-2 py-0.5 rounded-full">
-                         <Text className="text-blue-600 text-[9px] font-black uppercase tracking-widest">{app.status}</Text>
+                    <View className="flex-row items-center mt-1 flex-wrap">
+                      <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Applied {new Date(app.appliedAt).toLocaleDateString()}</Text>
+                      {!isMobile && <View className="w-1 h-1 rounded-full bg-slate-200 mx-3" />}
+                      <View className={`bg-blue-50 px-2 py-0.5 rounded-full ${isMobile ? 'mt-1' : 'ml-3'}`}>
+                         <Text className="text-blue-600 text-[8px] font-black uppercase tracking-widest">{app.status}</Text>
                       </View>
                     </View>
                   </View>
@@ -132,6 +135,6 @@ export default function JobApplicantsScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, ScrollView, RefreshControl, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView, RefreshControl, Platform, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/auth';
 import { Icon } from '@/components/ui/Icon';
 import { useRouter } from 'expo-router';
@@ -8,10 +9,15 @@ import { Job } from '@applyai/shared-types';
 export default function RecruiterDashboard() {
   const { session, user, signOut } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [profile, setProfile] = useState<any>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const isDesktop = width > 1024;
+  const isMobile = width < 768;
 
   const fetchData = useCallback(async () => {
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://applyai-rtuv.onrender.com';
@@ -73,10 +79,9 @@ export default function RecruiterDashboard() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fafaf9' }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-        {/* Header */}
-        <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row justify-between items-center z-10 shadow-sm shadow-slate-200/50">
+    <View style={{ flex: 1, backgroundColor: '#fafaf9', paddingTop: insets.top }}>
+      {/* Header */}
+      <View className="px-6 py-4 bg-white border-b border-slate-100 flex-row justify-between items-center z-10 shadow-sm shadow-slate-200/50">
           <View className="flex-row items-center">
             <View className="w-9 h-9 bg-emerald-600 rounded-xl items-center justify-center mr-3 shadow-lg shadow-emerald-200/50">
               <Icon name="briefcase.fill" size={18} color="white" />
@@ -105,19 +110,19 @@ export default function RecruiterDashboard() {
         >
           <View className="w-full max-w-5xl mx-auto">
             {/* Welcome Section */}
-            <View className="flex-row justify-between items-center mb-12">
+            <View className={`${isMobile ? 'flex-col gap-6' : 'flex-row justify-between items-center'} mb-12`}>
               <View>
                 <View className="flex-row items-center mb-2">
                   <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
                   <Text className="text-gray-400 text-[10px] font-black uppercase tracking-[3px]">{companyName}</Text>
                 </View>
-                <Text className="text-5xl font-black text-slate-900 tracking-tight" style={{ fontFamily: 'Geist' }}>Hi {displayName}</Text>
+                <Text className={`${isMobile ? 'text-4xl' : 'text-5xl'} font-black text-slate-900 tracking-tight`} style={{ fontFamily: 'Geist' }}>Hi {displayName}</Text>
                 <Text className="text-slate-400 text-sm font-medium mt-1">Manage your hiring pipeline and job listings.</Text>
               </View>
 
               <TouchableOpacity
                 onPress={() => router.push('/(recruiter)/create-job')}
-                className="bg-emerald-600 px-8 py-5 rounded-[24px] shadow-2xl shadow-emerald-200 flex-row items-center active:scale-[0.98] border-b-4 border-emerald-700"
+                className={`bg-emerald-600 ${isMobile ? 'px-6 py-4' : 'px-8 py-5'} rounded-[24px] shadow-2xl shadow-emerald-200 flex-row items-center active:scale-[0.98] border-b-4 border-emerald-700 self-start`}
               >
                 <Icon name="plus.circle.fill" size={20} color="white" />
                 <Text className="text-white font-black uppercase text-sm tracking-[2px] ml-3">New Job</Text>
@@ -196,31 +201,35 @@ export default function RecruiterDashboard() {
                       {jobs.map((job) => (
                         <TouchableOpacity
                           key={job.id}
-                          className="bg-white p-7 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/30 flex-row items-center active:scale-[0.99] active:bg-slate-50 transition-all"
+                          className="bg-white p-5 md:p-7 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/30 flex-row items-center active:scale-[0.99] active:bg-slate-50 transition-all"
                           onPress={() => {
                             router.push(`/(recruiter)/job-applications/${job.id}`);
                           }}
                         >
-                          <View className="w-16 h-16 bg-slate-50 rounded-3xl items-center justify-center mr-6 border border-slate-100/50 shadow-inner">
-                            <Icon name="briefcase.fill" size={28} color="#64748b" />
+                          <View className="w-12 h-12 md:w-16 md:h-16 bg-slate-50 rounded-2xl md:rounded-3xl items-center justify-center mr-4 md:mr-6 border border-slate-100/50 shadow-inner">
+                            <Icon name="briefcase.fill" size={isMobile ? 20 : 28} color="#64748b" />
                           </View>
-                          <View className="flex-1">
-                            <View className="flex-row items-center mb-1.5">
-                              <Text className="text-xl font-black text-slate-900 tracking-tight mr-3">{job.title}</Text>
-                              <View className="bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                                <Text className="text-emerald-700 text-[9px] font-black uppercase tracking-wider">Active</Text>
+                          <View className="flex-1 min-w-0">
+                            <View className="flex-row items-center mb-1.5 flex-wrap">
+                              <Text className="text-lg md:text-xl font-black text-slate-900 tracking-tight mr-2" numberOfLines={1}>{job.title}</Text>
+                              <View className="bg-emerald-50 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border border-emerald-100">
+                                <Text className="text-emerald-700 text-[8px] md:text-[9px] font-black uppercase tracking-wider">Active</Text>
                               </View>
                             </View>
-                            <View className="flex-row items-center">
-                              <Icon name="mappin.circle" size={14} color="#94a3b8" />
-                              <Text className="text-slate-400 text-sm ml-1.5 font-bold tracking-tight">{job.location || 'Remote'}</Text>
-                              <View className="w-1 h-1 rounded-full bg-slate-200 mx-4" />
-                              <Text className="text-slate-400 text-sm font-bold tracking-tight">{(job as any).applicantCount || 0} Applicants</Text>
+                            <View className="flex-row items-center flex-wrap">
+                              <View className="flex-row items-center mr-3">
+                                <Icon name="mappin.circle" size={12} color="#94a3b8" />
+                                <Text className="text-slate-400 text-xs ml-1 font-bold tracking-tight" numberOfLines={1}>{job.location || 'Remote'}</Text>
+                              </View>
+                              <View className="flex-row items-center">
+                                {!isMobile && <View className="w-1 h-1 rounded-full bg-slate-200 mx-2" />}
+                                <Text className="text-slate-400 text-xs font-bold tracking-tight">{(job as any).applicantCount || 0} Applicants</Text>
+                              </View>
                             </View>
                           </View>
 
-                          <View className="w-12 h-12 rounded-full bg-slate-50 items-center justify-center border border-slate-100">
-                            <Icon name="chevron.left" size={16} color="#cbd5e1" style={{ transform: [{ rotate: '180deg' }] }} />
+                          <View className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-50 items-center justify-center border border-slate-100 ml-2">
+                            <Icon name="chevron.left" size={14} color="#cbd5e1" style={{ transform: [{ rotate: '180deg' }] }} />
                           </View>
                         </TouchableOpacity>
                       ))}
@@ -231,7 +240,6 @@ export default function RecruiterDashboard() {
             </View>
           </View>
         </ScrollView>
-      </SafeAreaView>
     </View>
   );
 }

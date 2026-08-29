@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/auth';
 
 export default function CreateJobScreen() {
   const { session } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [generatingJD, setGeneratingJD] = useState(false);
   const { width } = useWindowDimensions();
   const isDesktop = width > 1024;
+  const isMobile = width < 768;
 
   const [form, setForm] = useState({
     title: '',
@@ -141,20 +143,32 @@ export default function CreateJobScreen() {
         <Text className="text-slate-500 font-black text-[10px] uppercase tracking-[3px]">{label}</Text>
         {required && <Text className="text-red-500 text-[10px] ml-1">*</Text>}
       </View>
-      <TextInput
-        value={value}
-        onChangeText={(text) => {
-          setForm(f => ({ ...f, [key]: text }));
-          if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
-        }}
-        placeholder={placeholder}
-        placeholderTextColor="#cbd5e1"
-        keyboardType={keyboardType}
-        multiline={multiline}
-        numberOfLines={multiline ? 8 : 1}
-        className={`bg-slate-50/50 px-6 py-5 rounded-[24px] border-2 ${errors[key] ? 'border-red-400' : 'border-slate-100'} text-slate-900 font-bold shadow-sm focus:border-emerald-500 transition-all ${multiline ? 'min-h-[200px] pt-5' : ''}`}
-        textAlignVertical={multiline ? 'top' : 'center'}
-      />
+      <View className={`bg-slate-50 rounded-[24px] border-2 ${errors[key] ? 'border-red-400' : 'border-slate-100'} shadow-sm overflow-hidden`}>
+        <TextInput
+          value={value}
+          onChangeText={(text) => {
+            setForm(f => ({ ...f, [key]: text }));
+            if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
+          }}
+          placeholder={placeholder}
+          placeholderTextColor="#cbd5e1"
+          keyboardType={keyboardType}
+          multiline={multiline}
+          numberOfLines={multiline ? 8 : 1}
+          style={{
+            backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0,0,0,0)',
+            paddingHorizontal: 24,
+            paddingVertical: 20,
+            color: '#0f172a',
+            fontWeight: '700',
+            fontSize: 15,
+            minHeight: multiline ? 200 : undefined
+          }}
+          className="w-full bg-transparent"
+          textAlignVertical={multiline ? 'top' : 'center'}
+          underlineColorAndroid="transparent"
+        />
+      </View>
       {errors[key] ? <Text className="text-red-500 text-[10px] mt-2 ml-1 font-black uppercase tracking-widest">{errors[key]}</Text> : null}
     </View>
   );
@@ -162,7 +176,7 @@ export default function CreateJobScreen() {
   const renderDropdown = (label: string, value: string, key: keyof typeof form, options: { label: string, value: string }[]) => (
     <View className={`mb-8 ${isDesktop ? 'flex-1 mx-3' : ''}`}>
       <Text className="text-slate-500 font-black text-[10px] uppercase tracking-[3px] mb-3 ml-1">{label}</Text>
-      <View className="bg-slate-50/50 rounded-[24px] border-2 border-slate-100 shadow-sm overflow-hidden">
+      <View className="bg-slate-50 rounded-[24px] border-2 border-slate-100 shadow-sm overflow-hidden">
         {Platform.OS === 'web' ? (
           <select
             value={value}
@@ -182,7 +196,7 @@ export default function CreateJobScreen() {
             {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         ) : (
-          <View className="px-6 py-5 flex-row justify-between items-center">
+          <View className="px-6 py-5 flex-row justify-between items-center bg-transparent">
             <Text className="text-slate-900 font-bold">{options.find(o => o.value === value)?.label}</Text>
             <Icon name="chevron.left" size={12} color="#94a3b8" style={{ transform: [{ rotate: '-90deg' }] }} />
           </View>
@@ -192,7 +206,7 @@ export default function CreateJobScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#fafaf9]">
+    <View className="flex-1 bg-[#fafaf9]" style={{ paddingTop: insets.top }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <View className="bg-white border-b border-slate-100 items-center z-20 shadow-sm shadow-slate-200/30">
           <View style={{ maxWidth: 1000, width: '100%' }} className="px-6 py-5 flex-row items-center justify-between">
@@ -307,7 +321,7 @@ export default function CreateJobScreen() {
         </ScrollView>
 
         {/* Action Bar */}
-        <View className="absolute bottom-0 left-0 right-0 items-center bg-[#fafaf9]/90 backdrop-blur-3xl z-30">
+        <View className="absolute bottom-0 left-0 right-0 items-center bg-[#fafaf9]/90 backdrop-blur-3xl z-30" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
           <View style={{ maxWidth: 950, width: '100%' }} className="p-10 border-t border-slate-100">
             <TouchableOpacity
               onPress={handleCreate}
@@ -323,6 +337,6 @@ export default function CreateJobScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

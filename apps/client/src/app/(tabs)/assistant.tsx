@@ -236,7 +236,7 @@ export default function AssistantScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#fafaf9] h-screen overflow-hidden mesh-gradient" style={Platform.OS === 'web' ? { height: '100vh' } : { flex: 1 }}>
+    <View className="flex-1 bg-[#fafaf9] h-screen overflow-hidden mesh-gradient" style={Platform.OS === 'web' ? { height: '100vh' } : { flex: 1, paddingTop: insets.top }}>
       <View className="flex-1 flex-row overflow-hidden h-full">
         {/* CHAT PANE */}
         <View className={`${isDesktop ? 'w-[400px] border-r border-slate-200/60' : 'flex-1'} bg-white/40 h-full overflow-hidden`}>
