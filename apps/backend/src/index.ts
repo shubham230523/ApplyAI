@@ -54,6 +54,9 @@ async function main() {
       console.log(`>>> Incoming Request: ${request.method} ${request.url}`);
     });
 
+    fastify.get('/health', async () => ({ status: 'ok' }));
+    fastify.get('/', async () => ({ message: 'ApplyAI Backend API is running' }));
+
     console.log('--- Registering Routes ---');
     const { profileRoutes } = await import('./modules/profiles/profile.routes.js');
     const { orchestratorRoutes } = await import('./modules/orchestrator/orchestrator.routes.js');
